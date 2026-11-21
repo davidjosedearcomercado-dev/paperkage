@@ -1,0 +1,2958 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PaperKage — Cyber-Anime PDF Studio</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- PDF-Lib -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            kage: {
+              bg: '#090a15',
+              panel: '#0e1124',
+              blue: '#4361ee',
+              blueHover: '#3a56d4',
+              crimson: '#f72585',
+              fire: '#ef4444',
+              cyan: '#00f5d4'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #090a15;
+      background-image: 
+        radial-gradient(circle at 12% 15%, rgba(67, 97, 238, 0.14) 0%, transparent 38%),
+        radial-gradient(circle at 88% 85%, rgba(247, 37, 133, 0.11) 0%, transparent 40%);
+      color: #f1f5f9;
+      overflow: hidden;
+    }
+
+    .font-anime {
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #090a15; }
+    ::-webkit-scrollbar-thumb { background: #1e2548; border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4361ee; }
+
+    .cyber-panel {
+      background: rgba(13, 16, 36, 0.82);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(67, 97, 238, 0.18);
+    }
+
+    .canvas-shadow {
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.85), 0 0 25px rgba(67, 97, 238, 0.15);
+    }
+
+    .tool-btn {
+      border: 1px solid transparent;
+    }
+    .tool-btn:hover {
+      background: rgba(67, 97, 238, 0.14);
+      border-color: rgba(67, 97, 238, 0.35);
+      color: #ffffff;
+    }
+    .tool-btn.active {
+      background: linear-gradient(135deg, #4361ee 0%, #f72585 100%);
+      color: white;
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 0 18px rgba(247, 37, 133, 0.45);
+    }
+
+    .nav-btn {
+      border-left: 3px solid transparent;
+    }
+    .nav-btn.active {
+      background: linear-gradient(90deg, rgba(67, 97, 238, 0.24) 0%, rgba(247, 37, 133, 0.08) 100%);
+      color: #ffffff;
+      border-left: 3px solid #f72585;
+      box-shadow: inset 0 0 12px rgba(67, 97, 238, 0.15);
+    }
+    .nav-btn.active i {
+      color: #f72585;
+    }
+
+    .drag-over-card {
+      border-color: #f72585 !important;
+      transform: scale(1.03);
+      background: rgba(247, 37, 133, 0.14) !important;
+      box-shadow: 0 0 20px rgba(247, 37, 133, 0.3);
+    }
+
+    .pdf-text-hitbox {
+      position: absolute;
+      border: 1px dashed rgba(0, 245, 212, 0.65);
+      background: rgba(67, 97, 238, 0.12);
+      border-radius: 3px;
+      cursor: text;
+      transition: all 0.14s ease;
+    }
+    .pdf-text-hitbox:hover {
+      border: 1.5px solid #f72585;
+      background: rgba(247, 37, 133, 0.24);
+      box-shadow: 0 0 12px rgba(247, 37, 133, 0.45);
+      z-index: 20;
+    }
+
+    @keyframes floatLogo {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-2px); }
+    }
+    .logo-float {
+      animation: floatLogo 3.5s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col select-none">
+
+  <!-- BARRA SUPERIOR CYBER-ANIME -->
+  <header class="h-16 cyber-panel border-b border-blue-500/20 px-6 flex items-center justify-between z-20 shrink-0">
+    <div class="flex items-center gap-3.5">
+      <!-- Logo Original PaperKage -->
+      <div class="logo-float w-11 h-11 rounded-2xl bg-gradient-to-br from-[#4361ee] via-[#3a0ca3] to-[#f72585] p-[2px] shadow-lg shadow-[#f72585]/25 shrink-0">
+        <div class="w-full h-full bg-[#090a15] rounded-[14px] flex items-center justify-center relative overflow-hidden">
+          <svg viewBox="0 0 64 64" class="w-9 h-9" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="24" fill="url(#kageGlow)" opacity="0.35"/>
+            <path d="M18 14C18 11.7909 19.7909 10 22 10H38L46 18V48C46 50.2091 44.2091 52 42 52H22C19.7909 52 18 50.2091 18 48V14Z" fill="#F8FAFC" stroke="#4361ee" stroke-width="2.2"/>
+            <path d="M38 10V18H46" fill="#CBD5E1" stroke="#4361ee" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M16.5 22.5H47.5V27.5H16.5V22.5Z" fill="#f72585"/>
+            <path d="M47 24L55 20L53 25L56 29L47 26.5V24Z" fill="#ef4444"/>
+            <rect x="25" y="22.8" width="14" height="4.4" rx="1.2" fill="#1e293b" stroke="#94a3b8" stroke-width="0.9"/>
+            <ellipse cx="26.5" cy="34.5" rx="2.3" ry="3" fill="#0f172a"/>
+            <circle cx="25.8" cy="33.5" r="0.9" fill="#ffffff"/>
+            <ellipse cx="37.5" cy="34.5" rx="2.3" ry="3" fill="#0f172a"/>
+            <circle cx="36.8" cy="33.5" r="0.9" fill="#ffffff"/>
+            <path d="M29.5 39.5Q32 42 34.5 39.5" stroke="#f72585" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 43L15 40L18 43L15 46L12 43Z" fill="#00f5d4"/>
+            <defs>
+              <radialGradient id="kageGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(32 32) scale(24)">
+                <stop stop-color="#f72585"/>
+                <stop offset="1" stop-color="#4361ee" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+          </svg>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h1 class="font-anime font-extrabold text-xl tracking-wider bg-gradient-to-r from-white via-blue-200 to-[#f72585] bg-clip-text text-transparent">
+            PaperKage
+          </h1>
+          <span class="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#f72585]/15 text-[#ff66b2] border border-[#f72585]/40 shadow-sm shadow-[#f72585]/20">
+            Cyber Studio
+          </span>
+        </div>
+        <p id="currentFileName" class="text-xs text-slate-400 truncate max-w-xs" data-i18n="no_file">Ningún pergamino cargado</p>
+      </div>
+    </div>
+
+    <!-- Controles Globales + Selector de Idioma -->
+    <div class="flex items-center gap-2.5">
+      <!-- Selector de Idioma Global -->
+      <div class="flex items-center gap-1.5 bg-[#090a15] px-2.5 py-1.5 rounded-xl border border-[#4361ee]/40 hover:border-[#00f5d4] transition" title="Language / Idioma">
+        <i data-lucide="globe" class="w-4 h-4 text-[#00f5d4]"></i>
+        <select id="languageSelector" onchange="changeLanguage(this.value)" class="bg-transparent text-xs font-semibold text-blue-100 focus:outline-none cursor-pointer">
+          <option value="es" class="bg-[#0e1124]">ES — Español</option>
+          <option value="en" class="bg-[#0e1124]">EN — English</option>
+          <option value="pt" class="bg-[#0e1124]">PT — Português</option>
+          <option value="fr" class="bg-[#0e1124]">FR — Français</option>
+          <option value="de" class="bg-[#0e1124]">DE — Deutsch</option>
+          <option value="ja" class="bg-[#0e1124]">JA — 日本語</option>
+        </select>
+      </div>
+
+      <label for="globalPdfInput" class="cursor-pointer px-4 py-2 rounded-xl bg-[#141936] hover:bg-[#1c234b] text-blue-100 text-xs font-semibold flex items-center gap-2 transition border border-[#4361ee]/40 hover:border-[#4361ee] shadow-md">
+        <i data-lucide="folder-open" class="w-4 h-4 text-[#00f5d4]"></i>
+        <span data-i18n="open_pdf">Invocar PDF</span>
+      </label>
+      <input type="file" id="globalPdfInput" accept="application/pdf" class="hidden">
+
+      <button id="exportPdfBtn" onclick="openSaveModal()" disabled class="px-5 py-2 rounded-xl bg-gradient-to-r from-[#4361ee] to-[#f72585] hover:from-[#3a56d4] hover:to-[#e01e79] disabled:opacity-35 disabled:pointer-events-none text-white text-xs font-bold tracking-wide flex items-center gap-2 shadow-lg shadow-[#f72585]/30 transition">
+        <i data-lucide="sparkles" class="w-4 h-4"></i>
+        <span data-i18n="save_pdf">Sellar y Descargar PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- MENÚ LATERAL DE MÓDULOS -->
+    <aside class="w-60 cyber-panel border-r border-blue-500/20 flex flex-col justify-between py-4 z-10 shrink-0 overflow-y-auto">
+      <div class="space-y-1 px-3">
+        <p class="px-3 text-[10px] font-anime font-bold uppercase tracking-widest text-blue-400/70 mb-2" data-i18n="sec_edit">Artes de Edición</p>
+        
+        <button onclick="switchTab('editor')" id="tab-editor" class="nav-btn active w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-blue-500/10 transition">
+          <i data-lucide="edit-3" class="w-4 h-4 text-blue-400"></i>
+          <span data-i18n="nav_editor">Editor y Firmas</span>
+        </button>
+
+        <button onclick="switchTab('organize')" id="tab-organize" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-blue-500/10 transition">
+          <i data-lucide="layout-grid" class="w-4 h-4 text-blue-400"></i>
+          <span data-i18n="nav_organize">Organizar Hojas</span>
+        </button>
+
+        <button onclick="switchTab('resize')" id="tab-resize" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-blue-500/10 transition">
+          <i data-lucide="scaling" class="w-4 h-4 text-blue-400"></i>
+          <span data-i18n="nav_resize">Tamaño de Página</span>
+        </button>
+
+        <button onclick="switchTab('merge')" id="tab-merge" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-blue-500/10 transition">
+          <i data-lucide="files" class="w-4 h-4 text-blue-400"></i>
+          <span data-i18n="nav_merge">Fusionar PDFs</span>
+        </button>
+
+        <button onclick="switchTab('split')" id="tab-split" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-blue-500/10 transition">
+          <i data-lucide="scissors" class="w-4 h-4 text-blue-400"></i>
+          <span data-i18n="nav_split">Cortar / Extraer</span>
+        </button>
+
+        <p class="px-3 pt-4 text-[10px] font-anime font-bold uppercase tracking-widest text-[#f72585]/80 mb-2" data-i18n="sec_alchemy">Alquimia y Sellos</p>
+
+        <button onclick="switchTab('img2pdf')" id="tab-img2pdf" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-blue-500/10 transition">
+          <i data-lucide="file-plus-2" class="w-4 h-4 text-blue-400"></i>
+          <span data-i18n="nav_img2pdf">Imágenes a PDF</span>
+        </button>
+
+        <button onclick="switchTab('images')" id="tab-images" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-blue-500/10 transition">
+          <i data-lucide="image" class="w-4 h-4 text-blue-400"></i>
+          <span data-i18n="nav_images">PDF a Imágenes</span>
+        </button>
+
+        <button onclick="switchTab('pagenum')" id="tab-pagenum" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-blue-500/10 transition">
+          <i data-lucide="hash" class="w-4 h-4 text-blue-400"></i>
+          <span data-i18n="nav_pagenum">Numerar Páginas</span>
+        </button>
+
+        <button onclick="switchTab('watermark')" id="tab-watermark" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-blue-500/10 transition">
+          <i data-lucide="stamp" class="w-4 h-4 text-blue-400"></i>
+          <span data-i18n="nav_watermark">Marca de Agua</span>
+        </button>
+
+        <button onclick="switchTab('metadata')" id="tab-metadata" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-blue-500/10 transition">
+          <i data-lucide="shield" class="w-4 h-4 text-blue-400"></i>
+          <span data-i18n="nav_metadata">Sigilo y Metadatos</span>
+        </button>
+      </div>
+
+      <!-- Info del Documento -->
+      <div class="px-4 mt-4">
+        <div class="p-3.5 rounded-2xl bg-[#090a15]/90 border border-[#4361ee]/30 space-y-2 shadow-inner">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400" data-i18n="stat_pages">Hojas:</span>
+            <span id="statPages" class="font-bold text-blue-300">-</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400" data-i18n="stat_size">Peso:</span>
+            <span id="statSize" class="font-bold text-blue-300">-</span>
+          </div>
+          <div class="pt-1.5 border-t border-slate-800/80 flex items-center gap-1.5 text-[11px] font-medium text-[#00f5d4]">
+            <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+            <span data-i18n="offline_badge">Motor Offline 100% Seguro</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ÁREA PRINCIPAL DE TRABAJO -->
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+
+      <!-- ESTADO VACÍO (DROPZONE INICIAL) -->
+      <div id="emptyState" class="absolute inset-0 z-10 flex items-center justify-center p-8 bg-[#090a15]/95 backdrop-blur-sm">
+        <div id="dropZone" class="max-w-xl w-full border-2 border-dashed border-[#4361ee]/50 hover:border-[#f72585] rounded-3xl p-10 text-center transition-all bg-[#0e1124]/80 hover:bg-[#131733] cursor-pointer group shadow-2xl shadow-blue-950/50">
+          <div class="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#4361ee]/20 to-[#f72585]/20 border border-[#4361ee]/40 flex items-center justify-center mx-auto mb-5 group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-lg shadow-[#4361ee]/20">
+            <i data-lucide="scroll-text" class="w-10 h-10 text-[#00f5d4]"></i>
+          </div>
+          <h2 class="font-anime text-xl font-bold text-white mb-2 tracking-wide" data-i18n="drop_title">Suelta tu archivo PDF aquí</h2>
+          <p class="text-sm text-slate-400 mb-6 leading-relaxed">
+            <span data-i18n="drop_sub1">O haz clic para seleccionarlo desde tu dispositivo. También puedes</span>
+            <span onclick="event.stopPropagation(); switchTab('merge')" class="text-[#ff66b2] font-semibold underline hover:text-white" data-i18n="drop_link_merge">fusionar varios PDFs</span>
+            <span data-i18n="drop_or">o</span>
+            <span onclick="event.stopPropagation(); switchTab('img2pdf')" class="text-[#00f5d4] font-semibold underline hover:text-white" data-i18n="drop_link_img">transformar imágenes a PDF</span>.
+          </p>
+          <span class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#4361ee] to-[#f72585] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#f72585]/30 transition">
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+            <span data-i18n="drop_btn">Cargar Documento PDF</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           MÓDULO 1: EDITOR Y ANOTADOR VISUAL
+           ========================================== -->
+      <section id="view-editor" class="flex-1 flex flex-col overflow-hidden">
+        <div class="h-14 cyber-panel border-b border-blue-500/20 px-4 flex items-center justify-between gap-2 shrink-0 overflow-x-auto">
+          <div class="flex items-center gap-1">
+            <button onclick="setEditorTool('cursor')" id="tool-cursor" class="tool-btn active px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-slate-300 transition">
+              <i data-lucide="mouse-pointer" class="w-4 h-4"></i>
+              <span data-i18n="tool_move">Mover</span>
+            </button>
+            <button onclick="setEditorTool('edittext')" id="tool-edittext" class="tool-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-[#00f5d4] bg-[#00f5d4]/10 border border-[#00f5d4]/30 transition">
+              <i data-lucide="file-pen-line" class="w-4 h-4"></i>
+              <span data-i18n="tool_editpdf">Editar PDF</span>
+            </button>
+            <button onclick="setEditorTool('text')" id="tool-text" class="tool-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-slate-300 transition">
+              <i data-lucide="type" class="w-4 h-4"></i>
+              <span data-i18n="tool_addtext">+ Texto</span>
+            </button>
+            <button onclick="setEditorTool('draw')" id="tool-draw" class="tool-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-slate-300 transition">
+              <i data-lucide="pen-tool" class="w-4 h-4"></i>
+              <span data-i18n="tool_draw">Pincel</span>
+            </button>
+            <button onclick="setEditorTool('highlight')" id="tool-highlight" class="tool-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-slate-300 transition">
+              <i data-lucide="highlighter" class="w-4 h-4"></i>
+              <span data-i18n="tool_highlight">Resaltar</span>
+            </button>
+            <button onclick="setEditorTool('rect')" id="tool-rect" class="tool-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-slate-300 transition">
+              <i data-lucide="square" class="w-4 h-4"></i>
+              <span data-i18n="tool_rect">Marco</span>
+            </button>
+            <button onclick="setEditorTool('arrow')" id="tool-arrow" class="tool-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-slate-300 transition">
+              <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+              <span data-i18n="tool_arrow">Flecha</span>
+            </button>
+            <button onclick="setEditorTool('whiteout')" id="tool-whiteout" class="tool-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-slate-300 transition">
+              <i data-lucide="eraser" class="w-4 h-4"></i>
+              <span data-i18n="tool_whiteout">Tapar</span>
+            </button>
+            <button onclick="openSignatureModal()" class="tool-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-slate-300 transition">
+              <i data-lucide="feather" class="w-4 h-4"></i>
+              <span data-i18n="tool_sign">Firmar</span>
+            </button>
+            <label for="stampImageInput" class="cursor-pointer tool-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-slate-300 transition">
+              <i data-lucide="image-plus" class="w-4 h-4"></i>
+              <span data-i18n="tool_stamp">Sello</span>
+            </label>
+            <input type="file" id="stampImageInput" accept="image/png, image/jpeg" class="hidden">
+
+            <div class="h-5 w-[1px] bg-blue-500/20 mx-1"></div>
+
+            <div class="flex items-center gap-1.5 bg-[#090a15] px-2.5 py-1 rounded-xl border border-blue-500/30">
+              <input type="color" id="AnnotationColor" value="#f72585" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
+              <select id="AnnotationSize" class="bg-transparent text-xs text-slate-200 focus:outline-none cursor-pointer">
+                <option value="2" class="bg-[#0e1124]" data-i18n="size_thin">Fino</option>
+                <option value="4" selected class="bg-[#0e1124]" data-i18n="size_med">Medio</option>
+                <option value="8" class="bg-[#0e1124]" data-i18n="size_thick">Grueso</option>
+                <option value="14" class="bg-[#0e1124]" data-i18n="size_extra">Extra</option>
+              </select>
+            </div>
+
+            <button onclick="undoAnnotation()" class="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-blue-500/20 transition" title="Undo (Ctrl+Z)">
+              <i data-lucide="undo-2" class="w-4 h-4"></i>
+            </button>
+            <button onclick="deleteSelectedAnnotation()" id="btnDeleteSelected" class="hidden p-1.5 rounded-xl text-[#f72585] hover:bg-[#f72585]/20 transition">
+              <i data-lucide="x-circle" class="w-4 h-4"></i>
+            </button>
+            <button onclick="clearPageAnnotations()" class="p-1.5 rounded-xl text-slate-400 hover:text-[#ef4444] hover:bg-red-500/15 transition">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Controles de Paginación y Zoom -->
+          <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-1 bg-[#090a15] px-2.5 py-1 rounded-xl border border-blue-500/30">
+              <button onclick="changePage(-1)" class="p-1 hover:text-[#f72585] transition"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <span id="pageIndicator" class="text-xs font-bold px-1.5 text-blue-200">1 / 1</span>
+              <button onclick="changePage(1)" class="p-1 hover:text-[#f72585] transition"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+
+            <div class="flex items-center gap-1 bg-[#090a15] px-2.5 py-1 rounded-xl border border-blue-500/30">
+              <button onclick="changeZoom(-0.2)" class="p-1 hover:text-[#00f5d4] transition"><i data-lucide="zoom-out" class="w-4 h-4"></i></button>
+              <span id="zoomIndicator" class="text-xs font-bold px-1 text-blue-200">120%</span>
+              <button onclick="changeZoom(0.2)" class="p-1 hover:text-[#00f5d4] transition"><i data-lucide="zoom-in" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visor Principal -->
+        <div class="flex-1 flex overflow-hidden">
+          <div id="thumbnailSidebar" class="w-44 bg-[#070811]/90 border-r border-blue-500/15 overflow-y-auto p-3 space-y-3 shrink-0"></div>
+
+          <div class="flex-1 overflow-auto p-8 flex justify-center items-start bg-[#06070f]">
+            <div id="canvasContainer" class="relative canvas-shadow rounded-lg overflow-hidden ring-1 ring-blue-500/30">
+              <canvas id="pdfRenderCanvas" class="block"></canvas>
+              <canvas id="annotationCanvas" class="absolute inset-0 cursor-default"></canvas>
+              <div id="detectedTextLayer" class="hidden absolute inset-0 z-10"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           MÓDULO 2: ORGANIZAR PÁGINAS
+           ========================================== -->
+      <section id="view-organize" class="hidden flex-1 flex-col overflow-hidden p-6">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="font-anime text-lg font-bold text-white tracking-wide" data-i18n="org_title">Organizar, Reordenar y Rotar Hojas</h2>
+            <p class="text-xs text-slate-400" data-i18n="org_sub">Arrastra y suelta las tarjetas para cambiar el orden del pergamino, o usa los controles inferiores.</p>
+          </div>
+          <button onclick="rotateAllPages(90)" class="px-4 py-2 rounded-xl bg-[#141936] hover:bg-[#4361ee] text-xs font-semibold text-white flex items-center gap-2 border border-[#4361ee]/40 transition">
+            <i data-lucide="rotate-cw" class="w-4 h-4 text-[#00f5d4]"></i>
+            <span data-i18n="org_rotate_all">Rotar Todas +90°</span>
+          </button>
+        </div>
+        <div id="organizeGrid" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 p-2"></div>
+      </section>
+
+      <!-- ==========================================
+           MÓDULO 3: TAMAÑO DE PÁGINA
+           ========================================== -->
+      <section id="view-resize" class="hidden flex-1 flex-col overflow-y-auto p-8">
+        <div class="max-w-xl mx-auto w-full cyber-panel p-6 rounded-3xl space-y-5 my-auto shadow-2xl">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-[#4361ee]/20 border border-[#4361ee]/40 flex items-center justify-center text-[#00f5d4]">
+              <i data-lucide="scaling" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="font-anime text-base font-bold text-white" data-i18n="res_title">Unificar Tamaño de Páginas</h2>
+              <p class="text-xs text-slate-400" data-i18n="res_sub">Iguala todas las hojas a un formato estándar para lectura o impresión perfecta.</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="res_preset">Formato de Hoja Destino</label>
+              <select id="resizeTargetPreset" class="w-full px-3.5 py-2.5 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white focus:outline-none focus:border-[#f72585]">
+                <option value="a4" selected>A4 (210 × 297 mm)</option>
+                <option value="letter">Letter / Carta (215.9 × 279.4 mm)</option>
+                <option value="legal">Legal / Oficio (215.9 × 355.6 mm)</option>
+                <option value="a3">A3 (297 × 420 mm)</option>
+                <option value="a5">A5 (148 × 210 mm)</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="res_orient">Orientación</label>
+                <select id="resizeOrientation" class="w-full px-3.5 py-2.5 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white">
+                  <option value="portrait" selected data-i18n="res_portrait">Vertical (Portrait)</option>
+                  <option value="landscape" data-i18n="res_landscape">Horizontal (Landscape)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="res_fit">Modo de Ajuste</label>
+                <select id="resizeFitMode" class="w-full px-3.5 py-2.5 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white">
+                  <option value="contain" selected data-i18n="res_contain">Ajustar y centrar (Sin deformar)</option>
+                  <option value="stretch" data-i18n="res_stretch">Estirar al lienzo completo</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="executePageResize()" class="w-full py-3 rounded-xl bg-gradient-to-r from-[#4361ee] to-[#f72585] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#f72585]/30 transition">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            <span data-i18n="res_btn">Aplicar Tamaño a Todas las Páginas</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           MÓDULO 4: UNIR PDFs (MERGE)
+           ========================================== -->
+      <section id="view-merge" class="hidden flex-1 flex-col overflow-y-auto p-8">
+        <div class="max-w-3xl mx-auto w-full space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="font-anime text-lg font-bold text-white" data-i18n="mrg_title">Fusionar Múltiples PDFs</h2>
+              <p class="text-xs text-slate-400" data-i18n="mrg_sub">Combina varios documentos en uno solo e iguala automáticamente el tamaño de sus hojas.</p>
+            </div>
+            <label for="mergeFilesInput" class="cursor-pointer px-4 py-2.5 rounded-xl bg-[#4361ee] hover:bg-[#3a56d4] text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-[#4361ee]/30 transition">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span data-i18n="mrg_add">Añadir Archivos PDF</span>
+            </label>
+            <input type="file" id="mergeFilesInput" accept="application/pdf" multiple class="hidden">
+          </div>
+
+          <div id="mergeList" class="space-y-2.5 min-h-[200px] p-4 rounded-2xl bg-[#090a15]/80 border border-[#4361ee]/25">
+            <p class="text-sm text-slate-500 text-center py-14" data-i18n="mrg_empty">Aún no has añadido archivos para fusionar.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl cyber-panel">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="scaling" class="w-4 h-4 text-[#00f5d4]"></i>
+              <label for="mergePageSize" class="text-xs font-semibold text-blue-200" data-i18n="mrg_size_lbl">Tamaño al unir:</label>
+              <select id="mergePageSize" class="px-3 py-1.5 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-xs text-white focus:outline-none focus:border-[#f72585]">
+                <option value="a4" selected data-i18n="mrg_opt_a4">Estandarizar a A4 (Recomendado)</option>
+                <option value="letter" data-i18n="mrg_opt_letter">Estandarizar a Carta (Letter)</option>
+                <option value="legal" data-i18n="mrg_opt_legal">Estandarizar a Oficio (Legal)</option>
+                <option value="original" data-i18n="mrg_opt_orig">Mantener tamaño original</option>
+              </select>
+            </div>
+
+            <div class="flex gap-3">
+              <button onclick="clearMergeList()" class="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition" data-i18n="btn_clear">Limpiar</button>
+              <button onclick="executeMerge()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#4361ee] to-[#f72585] hover:opacity-95 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-[#f72585]/30 transition">
+                <i data-lucide="git-merge" class="w-4 h-4"></i>
+                <span data-i18n="mrg_btn">Fusionar Ahora</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           MÓDULO 5: DIVIDIR Y EXTRAER PÁGINAS
+           ========================================== -->
+      <section id="view-split" class="hidden flex-1 flex-col overflow-y-auto p-8">
+        <div class="max-w-xl mx-auto w-full cyber-panel p-6 rounded-3xl space-y-6 my-auto shadow-2xl">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-[#f72585]/20 border border-[#f72585]/40 flex items-center justify-center text-[#f72585]">
+              <i data-lucide="scissors" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="font-anime text-base font-bold text-white" data-i18n="spl_title">Cortar y Extraer Páginas</h2>
+              <p class="text-xs text-slate-400" data-i18n="spl_sub">Genera un nuevo PDF únicamente con el rango de hojas que indiques.</p>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-semibold text-blue-200" data-i18n="spl_lbl">Rango de páginas a extraer</label>
+            <input type="text" id="splitRangeInput" placeholder="1-3, 5, 8-10" class="w-full px-4 py-2.5 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white focus:outline-none focus:border-[#f72585]">
+            <p class="text-[11px] text-slate-400" data-i18n="spl_hint">Usa guiones para rangos (1-4) y comas para hojas sueltas (2, 5, 7).</p>
+          </div>
+
+          <button onclick="executeSplit()" class="w-full py-3 rounded-xl bg-gradient-to-r from-[#4361ee] to-[#f72585] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#f72585]/30 transition">
+            <i data-lucide="file-output" class="w-4 h-4"></i>
+            <span data-i18n="spl_btn">Extraer y Descargar PDF</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           MÓDULO 6: IMÁGENES A PDF
+           ========================================== -->
+      <section id="view-img2pdf" class="hidden flex-1 flex-col overflow-y-auto p-8">
+        <div class="max-w-3xl mx-auto w-full space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="font-anime text-lg font-bold text-white" data-i18n="i2p_title">Transformar Imágenes a PDF</h2>
+              <p class="text-xs text-slate-400" data-i18n="i2p_sub">Convierte capturas, facturas o escaneos JPG/PNG en un pergamino PDF unificado.</p>
+            </div>
+            <label for="img2pdfInput" class="cursor-pointer px-4 py-2.5 rounded-xl bg-[#4361ee] hover:bg-[#3a56d4] text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-[#4361ee]/30 transition">
+              <i data-lucide="image-plus" class="w-4 h-4"></i>
+              <span data-i18n="i2p_add">Seleccionar Imágenes</span>
+            </label>
+            <input type="file" id="img2pdfInput" accept="image/png, image/jpeg" multiple class="hidden">
+          </div>
+
+          <div id="img2pdfList" class="grid grid-cols-2 sm:grid-cols-4 gap-3 min-h-[200px] p-4 rounded-2xl bg-[#090a15]/80 border border-[#4361ee]/25">
+            <p class="col-span-full text-sm text-slate-500 text-center py-14" data-i18n="i2p_empty">No has seleccionado imágenes aún.</p>
+          </div>
+
+          <div class="flex justify-between items-center">
+            <select id="imgPageFit" class="px-3.5 py-2.5 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-xs text-slate-200">
+              <option value="a4" selected data-i18n="i2p_opt_a4">Estandarizar en hoja tamaño A4</option>
+              <option value="letter" data-i18n="i2p_opt_letter">Estandarizar en hoja tamaño Carta</option>
+              <option value="fit" data-i18n="i2p_opt_fit">Ajustar página al tamaño de cada imagen</option>
+            </select>
+            <div class="flex gap-3">
+              <button onclick="clearImg2PdfList()" class="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition" data-i18n="btn_clear">Limpiar</button>
+              <button onclick="executeImg2Pdf()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#4361ee] to-[#f72585] hover:opacity-95 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-[#f72585]/30 transition">
+                <i data-lucide="file-check" class="w-4 h-4"></i>
+                <span data-i18n="i2p_btn">Crear y Abrir PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           MÓDULO 7: PDF A IMÁGENES
+           ========================================== -->
+      <section id="view-images" class="hidden flex-1 flex-col overflow-hidden p-6">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="font-anime text-lg font-bold text-white" data-i18n="p2i_title">Exportar Páginas como PNG</h2>
+            <p class="text-xs text-slate-400" data-i18n="p2i_sub">Descarga cada hoja de tu documento como imagen de alta nitidez.</p>
+          </div>
+        </div>
+        <div id="imagesGrid" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5 p-2"></div>
+      </section>
+
+      <!-- ==========================================
+           MÓDULO 8: NUMERACIÓN DE PÁGINAS
+           ========================================== -->
+      <section id="view-pagenum" class="hidden flex-1 flex-col overflow-y-auto p-8">
+        <div class="max-w-xl mx-auto w-full cyber-panel p-6 rounded-3xl space-y-5 my-auto shadow-2xl">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-[#4361ee]/20 border border-[#4361ee]/40 flex items-center justify-center text-[#00f5d4]">
+              <i data-lucide="hash" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="font-anime text-base font-bold text-white" data-i18n="pn_title">Numeración de Páginas</h2>
+              <p class="text-xs text-slate-400" data-i18n="pn_sub">Estampa folios consecutivos en todo el documento.</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="pn_format">Formato de texto</label>
+              <select id="pnFormat" class="w-full px-3.5 py-2.5 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white">
+                <option value="page_of" data-i18n="pn_opt_of">Página X de Y</option>
+                <option value="slash">X / Y</option>
+                <option value="only_num" data-i18n="pn_opt_num">Solo número (1, 2, 3...)</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="pn_pos">Posición</label>
+                <select id="pnPosition" class="w-full px-3.5 py-2.5 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white">
+                  <option value="bottom-right" data-i18n="pos_br">Inferior Derecha</option>
+                  <option value="bottom-center" selected data-i18n="pos_bc">Inferior Centro</option>
+                  <option value="bottom-left" data-i18n="pos_bl">Inferior Izquierda</option>
+                  <option value="top-right" data-i18n="pos_tr">Superior Derecha</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="pn_size">Tamaño (pt)</label>
+                <input type="number" id="pnSize" value="11" min="8" max="24" class="w-full px-3.5 py-2 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white">
+              </div>
+            </div>
+          </div>
+
+          <button onclick="applyPageNumbers()" class="w-full py-3 rounded-xl bg-gradient-to-r from-[#4361ee] to-[#f72585] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#f72585]/30 transition">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            <span data-i18n="pn_btn">Estampar Numeración</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           MÓDULO 9: MARCA DE AGUA
+           ========================================== -->
+      <section id="view-watermark" class="hidden flex-1 flex-col overflow-y-auto p-8">
+        <div class="max-w-xl mx-auto w-full cyber-panel p-6 rounded-3xl space-y-5 my-auto shadow-2xl">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-[#f72585]/20 border border-[#f72585]/40 flex items-center justify-center text-[#f72585]">
+              <i data-lucide="stamp" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="font-anime text-base font-bold text-white" data-i18n="wm_title">Sello de Marca de Agua</h2>
+              <p class="text-xs text-slate-400" data-i18n="wm_sub">Graba una marca diagonal protectora en todas las hojas.</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="wm_lbl">Texto del Sello</label>
+              <input type="text" id="wmText" value="CONFIDENTIAL" class="w-full px-4 py-2 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white focus:outline-none focus:border-[#f72585]">
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="wm_size">Tamaño (pt)</label>
+                <input type="number" id="wmSize" value="54" min="14" max="140" class="w-full px-3 py-2 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white">
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="wm_op">Opacidad</label>
+                <input type="number" id="wmOpacity" value="0.22" step="0.05" min="0.05" max="1" class="w-full px-3 py-2 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white">
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="wm_col">Color</label>
+                <input type="color" id="wmColor" value="#ef4444" class="w-full h-9 rounded-xl bg-[#090a15] border border-[#4361ee]/40 p-1 cursor-pointer">
+              </div>
+            </div>
+          </div>
+
+          <button onclick="applyWatermark()" class="w-full py-3 rounded-xl bg-gradient-to-r from-[#4361ee] to-[#f72585] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#f72585]/30 transition">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            <span data-i18n="wm_btn">Aplicar Sello a Todo el PDF</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           MÓDULO 10: METADATOS
+           ========================================== -->
+      <section id="view-metadata" class="hidden flex-1 flex-col overflow-y-auto p-8">
+        <div class="max-w-xl mx-auto w-full cyber-panel p-6 rounded-3xl space-y-5 my-auto shadow-2xl">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-[#00f5d4]/15 border border-[#00f5d4]/40 flex items-center justify-center text-[#00f5d4]">
+              <i data-lucide="shield" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="font-anime text-base font-bold text-white" data-i18n="meta_title">Sigilo y Metadatos</h2>
+              <p class="text-xs text-slate-400" data-i18n="meta_sub">Edita las propiedades internas o borra todo rastro oculto del archivo.</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="meta_doc_title">Título del Documento</label>
+              <input type="text" id="metaTitle" class="w-full px-3.5 py-2 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="meta_author">Autor</label>
+                <input type="text" id="metaAuthor" class="w-full px-3.5 py-2 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white">
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="meta_subject">Asunto</label>
+                <input type="text" id="metaSubject" class="w-full px-3.5 py-2 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-sm text-white">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button onclick="wipeMetadata()" class="flex-1 py-2.5 rounded-xl bg-[#1a1025] hover:bg-[#ef4444]/25 text-[#ff758f] border border-[#ef4444]/40 text-xs font-bold transition" data-i18n="meta_wipe">
+              Borrar Rastros (Limpiar)
+            </button>
+            <button onclick="saveMetadata()" class="flex-1 py-2.5 rounded-xl bg-[#4361ee] hover:bg-[#3a56d4] text-white text-xs font-bold transition" data-i18n="meta_save">
+              Guardar Propiedades
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL PARA EDITAR TEXTO DETECTADO EN EL PDF -->
+  <div id="editPdfTextModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="cyber-panel max-w-lg w-full rounded-3xl border border-[#4361ee]/50 p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-anime font-bold text-white text-sm flex items-center gap-2">
+          <i data-lucide="file-pen-line" class="w-4 h-4 text-[#00f5d4]"></i>
+          <span data-i18n="mod_txt_title">Reescribir Texto del PDF</span>
+        </h3>
+        <button onclick="closeEditPdfTextModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-semibold text-blue-200 block mb-1" data-i18n="mod_txt_lbl">Nuevo contenido</label>
+          <input type="text" id="editPdfTextInput" class="w-full px-3.5 py-2.5 rounded-xl bg-[#090a15] border border-[#4361ee]/50 text-sm text-white focus:outline-none focus:border-[#f72585]">
+        </div>
+
+        <div class="grid grid-cols-4 gap-2.5">
+          <div>
+            <label class="text-[11px] font-semibold text-slate-400 block mb-1" data-i18n="mod_txt_size">Tamaño (px)</label>
+            <input type="number" id="editPdfFontSize" min="6" max="96" class="w-full px-2.5 py-1.5 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-xs text-white">
+          </div>
+          <div>
+            <label class="text-[11px] font-semibold text-slate-400 block mb-1" data-i18n="mod_txt_style">Estilo</label>
+            <select id="editPdfFontWeight" class="w-full px-2 py-1.5 rounded-xl bg-[#090a15] border border-[#4361ee]/40 text-xs text-white">
+              <option value="400" data-i18n="mod_txt_norm">Normal</option>
+              <option value="700" data-i18n="mod_txt_bold">Negrita</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] font-semibold text-slate-400 block mb-1" data-i18n="mod_txt_col">Color</label>
+            <input type="color" id="editPdfTextColor" value="#0f172a" class="w-full h-8 rounded-xl bg-[#090a15] border border-[#4361ee]/40 p-0.5 cursor-pointer">
+          </div>
+          <div>
+            <label class="text-[11px] font-semibold text-slate-400 block mb-1" data-i18n="mod_txt_bg">Fondo</label>
+            <input type="color" id="editPdfBgColor" value="#ffffff" class="w-full h-8 rounded-xl bg-[#090a15] border border-[#4361ee]/40 p-0.5 cursor-pointer">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2.5 pt-2">
+        <button onclick="closeEditPdfTextModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300" data-i18n="btn_cancel">Cancelar</button>
+        <button onclick="applyPdfTextReplacement()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-[#4361ee] to-[#f72585] text-xs font-bold text-white shadow-md shadow-[#f72585]/30" data-i18n="btn_apply">Aplicar Cambio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PARA CREAR FIRMA -->
+  <div id="signatureModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="cyber-panel max-w-md w-full rounded-3xl border border-[#4361ee]/50 p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-anime font-bold text-white text-sm flex items-center gap-2">
+          <i data-lucide="feather" class="w-4 h-4 text-[#f72585]"></i>
+          <span data-i18n="sig_title">Traza tu Firma Ninja</span>
+        </h3>
+        <button onclick="closeSignatureModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="bg-white rounded-2xl overflow-hidden border-2 border-[#4361ee]">
+        <canvas id="signaturePad" width="390" height="170" class="cursor-crosshair block w-full"></canvas>
+      </div>
+      <p class="text-[11px] text-slate-400" data-i18n="sig_hint">Consejo: Usa la herramienta Mover para arrastrar y redimensionar tu firma en la hoja.</p>
+      <div class="flex justify-between items-center">
+        <button onclick="clearSignaturePad()" class="text-xs text-[#ff66b2] hover:text-white underline" data-i18n="sig_clear">Limpiar lienzo</button>
+        <div class="flex gap-2">
+          <button onclick="closeSignatureModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-xs font-semibold text-slate-300" data-i18n="btn_cancel">Cancelar</button>
+          <button onclick="insertSignatureToPage()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#4361ee] to-[#f72585] text-xs font-bold text-white" data-i18n="sig_insert">Insertar Firma</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE GUARDADO -->
+  <div id="saveModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="cyber-panel max-w-md w-full rounded-3xl border border-[#f72585]/50 p-6 space-y-5 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-anime font-bold text-white text-sm flex items-center gap-2">
+          <i data-lucide="save" class="w-4 h-4 text-[#00f5d4]"></i>
+          <span data-i18n="sav_title">Sellar y Exportar PDF</span>
+        </h3>
+        <button onclick="closeSaveModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-xs font-semibold text-blue-200 block" data-i18n="sav_lbl">Nombre del archivo final</label>
+        <div class="flex items-center rounded-xl bg-[#090a15] border border-[#4361ee]/50 focus-within:border-[#f72585] overflow-hidden">
+          <input type="text" id="exportFileNameInput" class="flex-1 px-3.5 py-2.5 bg-transparent text-sm text-white focus:outline-none">
+          <span class="px-3 text-xs font-bold text-[#00f5d4] bg-[#141936] py-2.5 border-l border-[#4361ee]/40">.pdf</span>
+        </div>
+        <p class="text-[11px] text-slate-400" data-i18n="sav_hint">Todas las ediciones de texto, firmas, sellos y páginas quedarán fusionadas.</p>
+      </div>
+
+      <div class="flex justify-end gap-2.5">
+        <button onclick="closeSaveModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition" data-i18n="btn_cancel">Cancelar</button>
+        <button onclick="confirmAndExportPdf()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-[#4361ee] to-[#f72585] hover:opacity-95 text-xs font-bold text-white flex items-center gap-1.5 shadow-lg shadow-[#f72585]/30 transition">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          <span data-i18n="sav_btn">Descargar Ahora</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICACIÓN TOAST -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden px-4 py-3 rounded-2xl bg-[#0e1124] border border-[#f72585]/60 text-white text-xs font-semibold shadow-2xl shadow-[#f72585]/20 flex items-center gap-2.5">
+    <i data-lucide="sparkles" class="w-4 h-4 text-[#00f5d4]"></i>
+    <span id="toastMsg">Operación completada</span>
+  </div>
+
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    lucide.createIcons();
+
+    // ==========================================
+    // DICCIONARIO GLOBAL MULTI-IDIOMA (i18n)
+    // ==========================================
+    const TRANSLATIONS = {
+      es: {
+        no_file: "Ningún pergamino cargado",
+        open_pdf: "Invocar PDF",
+        save_pdf: "Sellar y Descargar PDF",
+        sec_edit: "Artes de Edición",
+        nav_editor: "Editor y Firmas",
+        nav_organize: "Organizar Hojas",
+        nav_resize: "Tamaño de Página",
+        nav_merge: "Fusionar PDFs",
+        nav_split: "Cortar / Extraer",
+        sec_alchemy: "Alquimia y Sellos",
+        nav_img2pdf: "Imágenes a PDF",
+        nav_images: "PDF a Imágenes",
+        nav_pagenum: "Numerar Páginas",
+        nav_watermark: "Marca de Agua",
+        nav_metadata: "Sigilo y Metadatos",
+        stat_pages: "Hojas:",
+        stat_size: "Peso:",
+        offline_badge: "Motor Offline 100% Seguro",
+        drop_title: "Suelta tu archivo PDF aquí",
+        drop_sub1: "O haz clic para seleccionarlo desde tu dispositivo. También puedes",
+        drop_link_merge: "fusionar varios PDFs",
+        drop_or: "o",
+        drop_link_img: "transformar imágenes a PDF",
+        drop_btn: "Cargar Documento PDF",
+        tool_move: "Mover",
+        tool_editpdf: "Editar PDF",
+        tool_addtext: "+ Texto",
+        tool_draw: "Pincel",
+        tool_highlight: "Resaltar",
+        tool_rect: "Marco",
+        tool_arrow: "Flecha",
+        tool_whiteout: "Tapar",
+        tool_sign: "Firmar",
+        tool_stamp: "Sello",
+        size_thin: "Fino",
+        size_med: "Medio",
+        size_thick: "Grueso",
+        size_extra: "Extra",
+        org_title: "Organizar, Reordenar y Rotar Hojas",
+        org_sub: "Arrastra y suelta las tarjetas para cambiar el orden del pergamino, o usa los controles inferiores.",
+        org_rotate_all: "Rotar Todas +90°",
+        res_title: "Unificar Tamaño de Páginas",
+        res_sub: "Iguala todas las hojas a un formato estándar para lectura o impresión perfecta.",
+        res_preset: "Formato de Hoja Destino",
+        res_orient: "Orientación",
+        res_portrait: "Vertical (Portrait)",
+        res_landscape: "Horizontal (Landscape)",
+        res_fit: "Modo de Ajuste",
+        res_contain: "Ajustar y centrar (Sin deformar)",
+        res_stretch: "Estirar al lienzo completo",
+        res_btn: "Aplicar Tamaño a Todas las Páginas",
+        mrg_title: "Fusionar Múltiples PDFs",
+        mrg_sub: "Combina varios documentos en uno solo e iguala automáticamente el tamaño de sus hojas.",
+        mrg_add: "Añadir Archivos PDF",
+        mrg_empty: "Aún no has añadido archivos para fusionar.",
+        mrg_size_lbl: "Tamaño al unir:",
+        mrg_opt_a4: "Estandarizar a A4 (Recomendado)",
+        mrg_opt_letter: "Estandarizar a Carta (Letter)",
+        mrg_opt_legal: "Estandarizar a Oficio (Legal)",
+        mrg_opt_orig: "Mantener tamaño original",
+        btn_clear: "Limpiar",
+        mrg_btn: "Fusionar Ahora",
+        spl_title: "Cortar y Extraer Páginas",
+        spl_sub: "Genera un nuevo PDF únicamente con el rango de hojas que indiques.",
+        spl_lbl: "Rango de páginas a extraer",
+        spl_hint: "Usa guiones para rangos (1-4) y comas para hojas sueltas (2, 5, 7).",
+        spl_btn: "Extraer y Descargar PDF",
+        i2p_title: "Transformar Imágenes a PDF",
+        i2p_sub: "Convierte capturas, facturas o escaneos JPG/PNG en un pergamino PDF unificado.",
+        i2p_add: "Seleccionar Imágenes",
+        i2p_empty: "No has seleccionado imágenes aún.",
+        i2p_opt_a4: "Estandarizar en hoja tamaño A4",
+        i2p_opt_letter: "Estandarizar en hoja tamaño Carta",
+        i2p_opt_fit: "Ajustar página al tamaño de cada imagen",
+        i2p_btn: "Crear y Abrir PDF",
+        p2i_title: "Exportar Páginas como PNG",
+        p2i_sub: "Descarga cada hoja de tu documento como imagen de alta nitidez.",
+        pn_title: "Numeración de Páginas",
+        pn_sub: "Estampa folios consecutivos en todo el documento.",
+        pn_format: "Formato de texto",
+        pn_opt_of: "Página X de Y",
+        pn_opt_num: "Solo número (1, 2, 3...)",
+        pn_pos: "Posición",
+        pos_br: "Inferior Derecha",
+        pos_bc: "Inferior Centro",
+        pos_bl: "Inferior Izquierda",
+        pos_tr: "Superior Derecha",
+        pn_size: "Tamaño (pt)",
+        pn_btn: "Estampar Numeración",
+        wm_title: "Sello de Marca de Agua",
+        wm_sub: "Graba una marca diagonal protectora en todas las hojas.",
+        wm_lbl: "Texto del Sello",
+        wm_size: "Tamaño (pt)",
+        wm_op: "Opacidad",
+        wm_col: "Color",
+        wm_btn: "Aplicar Sello a Todo el PDF",
+        meta_title: "Sigilo y Metadatos",
+        meta_sub: "Edita las propiedades internas o borra todo rastro oculto del archivo.",
+        meta_doc_title: "Título del Documento",
+        meta_author: "Autor",
+        meta_subject: "Asunto",
+        meta_wipe: "Borrar Rastros (Limpiar)",
+        meta_save: "Guardar Propiedades",
+        mod_txt_title: "Reescribir Texto del PDF",
+        mod_txt_lbl: "Nuevo contenido",
+        mod_txt_size: "Tamaño (px)",
+        mod_txt_style: "Estilo",
+        mod_txt_norm: "Normal",
+        mod_txt_bold: "Negrita",
+        mod_txt_col: "Color",
+        mod_txt_bg: "Fondo",
+        btn_cancel: "Cancelar",
+        btn_apply: "Aplicar Cambio",
+        sig_title: "Traza tu Firma Ninja",
+        sig_hint: "Consejo: Usa la herramienta Mover para arrastrar y redimensionar tu firma en la hoja.",
+        sig_clear: "Limpiar lienzo",
+        sig_insert: "Insertar Firma",
+        sav_title: "Sellar y Exportar PDF",
+        sav_lbl: "Nombre del archivo final",
+        sav_hint: "Todas las ediciones de texto, firmas, sellos y páginas quedarán fusionadas.",
+        sav_btn: "Descargar Ahora",
+        sheet_label: "Hoja",
+        download_png: "Descargar Hoja",
+        prompt_new_text: "Escribe el nuevo texto que deseas añadir:"
+      },
+      en: {
+        no_file: "No scroll loaded",
+        open_pdf: "Open PDF",
+        save_pdf: "Seal & Download PDF",
+        sec_edit: "Editing Arts",
+        nav_editor: "Editor & Signatures",
+        nav_organize: "Organize Pages",
+        nav_resize: "Page Size",
+        nav_merge: "Merge PDFs",
+        nav_split: "Split / Extract",
+        sec_alchemy: "Alchemy & Seals",
+        nav_img2pdf: "Images to PDF",
+        nav_images: "PDF to Images",
+        nav_pagenum: "Page Numbers",
+        nav_watermark: "Watermark",
+        nav_metadata: "Stealth & Metadata",
+        stat_pages: "Pages:",
+        stat_size: "Size:",
+        offline_badge: "100% Secure Offline Engine",
+        drop_title: "Drop your PDF file here",
+        drop_sub1: "Or click to browse from your device. You can also",
+        drop_link_merge: "merge multiple PDFs",
+        drop_or: "or",
+        drop_link_img: "convert images to PDF",
+        drop_btn: "Load PDF Document",
+        tool_move: "Move",
+        tool_editpdf: "Edit PDF",
+        tool_addtext: "+ Text",
+        tool_draw: "Brush",
+        tool_highlight: "Highlight",
+        tool_rect: "Box",
+        tool_arrow: "Arrow",
+        tool_whiteout: "Whiteout",
+        tool_sign: "Sign",
+        tool_stamp: "Stamp",
+        size_thin: "Thin",
+        size_med: "Medium",
+        size_thick: "Thick",
+        size_extra: "Extra",
+        org_title: "Organize, Reorder & Rotate Pages",
+        org_sub: "Drag and drop cards to reorder pages, or use the action buttons below.",
+        org_rotate_all: "Rotate All +90°",
+        res_title: "Standardize Page Size",
+        res_sub: "Unify all pages into a single standard paper size for clean printing and reading.",
+        res_preset: "Target Paper Size",
+        res_orient: "Orientation",
+        res_portrait: "Portrait",
+        res_landscape: "Landscape",
+        res_fit: "Fit Mode",
+        res_contain: "Fit & Center (No distortion)",
+        res_stretch: "Stretch to fill page",
+        res_btn: "Apply Size to All Pages",
+        mrg_title: "Merge Multiple PDFs",
+        mrg_sub: "Combine several documents into one and automatically match their page sizes.",
+        mrg_add: "Add PDF Files",
+        mrg_empty: "No files added to merge yet.",
+        mrg_size_lbl: "Merge page size:",
+        mrg_opt_a4: "Standardize to A4 (Recommended)",
+        mrg_opt_letter: "Standardize to Letter",
+        mrg_opt_legal: "Standardize to Legal",
+        mrg_opt_orig: "Keep original page sizes",
+        btn_clear: "Clear",
+        mrg_btn: "Merge Now",
+        spl_title: "Split & Extract Pages",
+        spl_sub: "Create a new PDF containing only the page ranges you specify.",
+        spl_lbl: "Page range to extract",
+        spl_hint: "Use hyphens for ranges (1-4) and commas for single pages (2, 5, 7).",
+        spl_btn: "Extract & Download PDF",
+        i2p_title: "Convert Images to PDF",
+        i2p_sub: "Turn JPG/PNG screenshots, invoices, or scans into a unified PDF document.",
+        i2p_add: "Select Images",
+        i2p_empty: "No images selected yet.",
+        i2p_opt_a4: "Standardize to A4 page",
+        i2p_opt_letter: "Standardize to Letter page",
+        i2p_opt_fit: "Fit page to each image size",
+        i2p_btn: "Create & Open PDF",
+        p2i_title: "Export Pages as PNG",
+        p2i_sub: "Download each page of your document as a crisp PNG image.",
+        pn_title: "Page Numbering",
+        pn_sub: "Stamp consecutive page numbers across the entire document.",
+        pn_format: "Text format",
+        pn_opt_of: "Page X of Y",
+        pn_opt_num: "Number only (1, 2, 3...)",
+        pn_pos: "Position",
+        pos_br: "Bottom Right",
+        pos_bc: "Bottom Center",
+        pos_bl: "Bottom Left",
+        pos_tr: "Top Right",
+        pn_size: "Font size (pt)",
+        pn_btn: "Apply Page Numbers",
+        wm_title: "Watermark Stamp",
+        wm_sub: "Burn a protective diagonal watermark across all pages.",
+        wm_lbl: "Watermark Text",
+        wm_size: "Size (pt)",
+        wm_op: "Opacity",
+        wm_col: "Color",
+        wm_btn: "Apply Watermark to PDF",
+        meta_title: "Stealth & Metadata",
+        meta_sub: "Edit internal document properties or wipe hidden tracking metadata.",
+        meta_doc_title: "Document Title",
+        meta_author: "Author",
+        meta_subject: "Subject",
+        meta_wipe: "Wipe Metadata (Clean)",
+        meta_save: "Save Properties",
+        mod_txt_title: "Rewrite PDF Text",
+        mod_txt_lbl: "New content",
+        mod_txt_size: "Size (px)",
+        mod_txt_style: "Style",
+        mod_txt_norm: "Normal",
+        mod_txt_bold: "Bold",
+        mod_txt_col: "Color",
+        mod_txt_bg: "Cover Bg",
+        btn_cancel: "Cancel",
+        btn_apply: "Apply Change",
+        sig_title: "Draw Your Ninja Signature",
+        sig_hint: "Tip: Use the Move tool to drag and resize your signature on the page.",
+        sig_clear: "Clear pad",
+        sig_insert: "Insert Signature",
+        sav_title: "Seal & Export PDF",
+        sav_lbl: "Final file name",
+        sav_hint: "All text edits, signatures, stamps, and page changes will be merged.",
+        sav_btn: "Download Now",
+        sheet_label: "Page",
+        download_png: "Download Page",
+        prompt_new_text: "Enter the new text to add:"
+      },
+      pt: {
+        no_file: "Nenhum arquivo carregado",
+        open_pdf: "Abrir PDF",
+        save_pdf: "Selar e Baixar PDF",
+        sec_edit: "Artes de Edição",
+        nav_editor: "Editor e Assinaturas",
+        nav_organize: "Organizar Páginas",
+        nav_resize: "Tamanho da Página",
+        nav_merge: "Juntar PDFs",
+        nav_split: "Dividir / Extrair",
+        sec_alchemy: "Alquimia e Selos",
+        nav_img2pdf: "Imagens para PDF",
+        nav_images: "PDF para Imagens",
+        nav_pagenum: "Numerar Páginas",
+        nav_watermark: "Marca d'Água",
+        nav_metadata: "Sigilo e Metadados",
+        stat_pages: "Páginas:",
+        stat_size: "Tamanho:",
+        offline_badge: "Motor Offline 100% Seguro",
+        drop_title: "Solte seu arquivo PDF aqui",
+        drop_sub1: "Ou clique para selecionar do seu dispositivo. Você também pode",
+        drop_link_merge: "juntar vários PDFs",
+        drop_or: "ou",
+        drop_link_img: "converter imagens em PDF",
+        drop_btn: "Carregar Documento PDF",
+        tool_move: "Mover",
+        tool_editpdf: "Editar PDF",
+        tool_addtext: "+ Texto",
+        tool_draw: "Pincel",
+        tool_highlight: "Realçar",
+        tool_rect: "Quadro",
+        tool_arrow: "Seta",
+        tool_whiteout: "Cobrir",
+        tool_sign: "Assinar",
+        tool_stamp: "Carimbo",
+        size_thin: "Fino",
+        size_med: "Médio",
+        size_thick: "Grosso",
+        size_extra: "Extra",
+        org_title: "Organizar, Reordenar e Girar Páginas",
+        org_sub: "Arraste e solte os cartões para reordenar as páginas ou use os botões abaixo.",
+        org_rotate_all: "Girar Todas +90°",
+        res_title: "Padronizar Tamanho das Páginas",
+        res_sub: "Iguale todas as páginas a um formato padrão para impressão ou leitura perfeita.",
+        res_preset: "Formato de Página Destino",
+        res_orient: "Orientação",
+        res_portrait: "Retrato (Vertical)",
+        res_landscape: "Paisagem (Horizontal)",
+        res_fit: "Modo de Ajuste",
+        res_contain: "Ajustar e centralizar (Sem deformar)",
+        res_stretch: "Esticar na página inteira",
+        res_btn: "Aplicar Tamanho a Todas as Páginas",
+        mrg_title: "Juntar Múltiplos PDFs",
+        mrg_sub: "Combine vários documentos em um só e iguale automaticamente o tamanho das páginas.",
+        mrg_add: "Adicionar Arquivos PDF",
+        mrg_empty: "Nenhum arquivo adicionado para juntar ainda.",
+        mrg_size_lbl: "Tamanho ao juntar:",
+        mrg_opt_a4: "Padronizar para A4 (Recomendado)",
+        mrg_opt_letter: "Padronizar para Carta (Letter)",
+        mrg_opt_legal: "Padronizar para Ofício (Legal)",
+        mrg_opt_orig: "Manter tamanho original",
+        btn_clear: "Limpar",
+        mrg_btn: "Juntar Agora",
+        spl_title: "Dividir e Extrair Páginas",
+        spl_sub: "Gere um novo PDF apenas com o intervalo de páginas indicado.",
+        spl_lbl: "Intervalo de páginas para extrair",
+        spl_hint: "Use hífens para intervalos (1-4) e vírgulas para páginas soltas (2, 5, 7).",
+        spl_btn: "Extrair e Baixar PDF",
+        i2p_title: "Converter Imagens em PDF",
+        i2p_sub: "Transforme capturas, faturas ou digitalizações JPG/PNG em um PDF unificado.",
+        i2p_add: "Selecionar Imagens",
+        i2p_empty: "Nenhuma imagem selecionada ainda.",
+        i2p_opt_a4: "Padronizar em folha A4",
+        i2p_opt_letter: "Padronizar em folha Carta",
+        i2p_opt_fit: "Ajustar página ao tamanho de cada imagem",
+        i2p_btn: "Criar e Abrir PDF",
+        p2i_title: "Exportar Páginas como PNG",
+        p2i_sub: "Baixe cada página do seu documento como imagem de alta nitidez.",
+        pn_title: "Numeração de Páginas",
+        pn_sub: "Insira numeração consecutiva em todo o documento.",
+        pn_format: "Formato do texto",
+        pn_opt_of: "Página X de Y",
+        pn_opt_num: "Apenas número (1, 2, 3...)",
+        pn_pos: "Posição",
+        pos_br: "Inferior Direita",
+        pos_bc: "Inferior Centro",
+        pos_bl: "Inferior Esquerda",
+        pos_tr: "Superior Direita",
+        pn_size: "Tamanho (pt)",
+        pn_btn: "Aplicar Numeração",
+        wm_title: "Selo de Marca d'Água",
+        wm_sub: "Grave uma marca diagonal protetora em todas as páginas.",
+        wm_lbl: "Texto do Selo",
+        wm_size: "Tamanho (pt)",
+        wm_op: "Opacidade",
+        wm_col: "Cor",
+        wm_btn: "Aplicar Marca d'Água",
+        meta_title: "Sigilo e Metadados",
+        meta_sub: "Edite propriedades internas ou apague rastros ocultos do arquivo.",
+        meta_doc_title: "Título do Documento",
+        meta_author: "Autor",
+        meta_subject: "Assunto",
+        meta_wipe: "Limpar Metadados",
+        meta_save: "Salvar Propriedades",
+        mod_txt_title: "Reescrever Texto do PDF",
+        mod_txt_lbl: "Novo conteúdo",
+        mod_txt_size: "Tamanho (px)",
+        mod_txt_style: "Estilo",
+        mod_txt_norm: "Normal",
+        mod_txt_bold: "Negrito",
+        mod_txt_col: "Cor",
+        mod_txt_bg: "Fundo",
+        btn_cancel: "Cancelar",
+        btn_apply: "Aplicar Alteração",
+        sig_title: "Desenhe sua Assinatura",
+        sig_hint: "Dica: Use a ferramenta Mover para arrastar e redimensionar sua assinatura.",
+        sig_clear: "Limpar quadro",
+        sig_insert: "Inserir Assinatura",
+        sav_title: "Selar e Exportar PDF",
+        sav_lbl: "Nome do arquivo final",
+        sav_hint: "Todas as edições de texto, assinaturas, selos e páginas serão mescladas.",
+        sav_btn: "Baixar Agora",
+        sheet_label: "Pág.",
+        download_png: "Baixar Página",
+        prompt_new_text: "Digite o novo texto a adicionar:"
+      },
+      fr: {
+        no_file: "Aucun fichier chargé",
+        open_pdf: "Ouvrir PDF",
+        save_pdf: "Sceller et Télécharger",
+        sec_edit: "Arts d'Édition",
+        nav_editor: "Éditeur & Signatures",
+        nav_organize: "Organiser Pages",
+        nav_resize: "Taille de Page",
+        nav_merge: "Fusionner PDF",
+        nav_split: "Diviser / Extraire",
+        sec_alchemy: "Alchimie & Sceaux",
+        nav_img2pdf: "Images vers PDF",
+        nav_images: "PDF vers Images",
+        nav_pagenum: "Numéroter Pages",
+        nav_watermark: "Filigrane",
+        nav_metadata: "Métadonnées",
+        stat_pages: "Pages :",
+        stat_size: "Taille :",
+        offline_badge: "Moteur Hors-ligne 100% Sûr",
+        drop_title: "Déposez votre fichier PDF ici",
+        drop_sub1: "Ou cliquez pour parcourir votre appareil. Vous pouvez aussi",
+        drop_link_merge: "fusionner plusieurs PDF",
+        drop_or: "ou",
+        drop_link_img: "convertir des images en PDF",
+        drop_btn: "Charger un Document PDF",
+        tool_move: "Déplacer",
+        tool_editpdf: "Éditer PDF",
+        tool_addtext: "+ Texte",
+        tool_draw: "Pinceau",
+        tool_highlight: "Surligner",
+        tool_rect: "Cadre",
+        tool_arrow: "Flèche",
+        tool_whiteout: "Masquer",
+        tool_sign: "Signer",
+        tool_stamp: "Tampon",
+        size_thin: "Fin",
+        size_med: "Moyen",
+        size_thick: "Épais",
+        size_extra: "Extra",
+        org_title: "Organiser, Réorganiser et Pivoter",
+        org_sub: "Glissez-déposez les cartes pour réorganiser les pages.",
+        org_rotate_all: "Tout Pivoter +90°",
+        res_title: "Uniformiser la Taille des Pages",
+        res_sub: "Adaptez toutes les pages à un format standard pour une lecture ou impression parfaite.",
+        res_preset: "Format de Page Cible",
+        res_orient: "Orientation",
+        res_portrait: "Portrait",
+        res_landscape: "Paysage",
+        res_fit: "Mode d'Ajustement",
+        res_contain: "Ajuster et centrer (Sans déformer)",
+        res_stretch: "Étirer sur toute la page",
+        res_btn: "Appliquer à Toutes les Pages",
+        mrg_title: "Fusionner Plusieurs PDF",
+        mrg_sub: "Combinez plusieurs documents et uniformisez automatiquement la taille des pages.",
+        mrg_add: "Ajouter des Fichiers PDF",
+        mrg_empty: "Aucun fichier ajouté pour le moment.",
+        mrg_size_lbl: "Taille de fusion :",
+        mrg_opt_a4: "Standardiser en A4 (Recommandé)",
+        mrg_opt_letter: "Standardiser en Lettre (Letter)",
+        mrg_opt_legal: "Standardiser en Légal",
+        mrg_opt_orig: "Conserver la taille d'origine",
+        btn_clear: "Effacer",
+        mrg_btn: "Fusionner Maintenant",
+        spl_title: "Diviser et Extraire des Pages",
+        spl_sub: "Créez un nouveau PDF contenant uniquement les pages indiquées.",
+        spl_lbl: "Plage de pages à extraire",
+        spl_hint: "Utilisez des tirets (1-4) et des virgules (2, 5, 7).",
+        spl_btn: "Extraire et Télécharger",
+        i2p_title: "Convertir des Images en PDF",
+        i2p_sub: "Transformez vos images JPG/PNG en un document PDF unifié.",
+        i2p_add: "Sélectionner des Images",
+        i2p_empty: "Aucune image sélectionnée.",
+        i2p_opt_a4: "Standardiser en format A4",
+        i2p_opt_letter: "Standardiser en format Lettre",
+        i2p_opt_fit: "Adapter la page à chaque image",
+        i2p_btn: "Créer et Ouvrir le PDF",
+        p2i_title: "Exporter les Pages en PNG",
+        p2i_sub: "Téléchargez chaque page sous forme d'image haute netteté.",
+        pn_title: "Numérotation des Pages",
+        pn_sub: "Ajoutez des numéros de page consécutifs sur tout le document.",
+        pn_format: "Format du texte",
+        pn_opt_of: "Page X sur Y",
+        pn_opt_num: "Numéro seul (1, 2, 3...)",
+        pn_pos: "Position",
+        pos_br: "Bas Droite",
+        pos_bc: "Bas Centre",
+        pos_bl: "Bas Gauche",
+        pos_tr: "Haut Droite",
+        pn_size: "Taille (pt)",
+        pn_btn: "Appliquer la Numérotation",
+        wm_title: "Filigrane de Protection",
+        wm_sub: "Appliquez un texte en diagonale sur toutes les pages.",
+        wm_lbl: "Texte du Filigrane",
+        wm_size: "Taille (pt)",
+        wm_op: "Opacité",
+        wm_col: "Couleur",
+        wm_btn: "Appliquer le Filigrane",
+        meta_title: "Furtivité et Métadonnées",
+        meta_sub: "Modifiez les propriétés internes ou effacez les traces cachées.",
+        meta_doc_title: "Titre du Document",
+        meta_author: "Auteur",
+        meta_subject: "Sujet",
+        meta_wipe: "Effacer les Métadonnées",
+        meta_save: "Enregistrer",
+        mod_txt_title: "Modifier le Texte du PDF",
+        mod_txt_lbl: "Nouveau contenu",
+        mod_txt_size: "Taille (px)",
+        mod_txt_style: "Style",
+        mod_txt_norm: "Normal",
+        mod_txt_bold: "Gras",
+        mod_txt_col: "Couleur",
+        mod_txt_bg: "Fond",
+        btn_cancel: "Annuler",
+        btn_apply: "Appliquer",
+        sig_title: "Dessinez votre Signature",
+        sig_hint: "Astuce : Utilisez l'outil Déplacer pour ajuster votre signature.",
+        sig_clear: "Effacer",
+        sig_insert: "Insérer la Signature",
+        sav_title: "Sceller et Exporter le PDF",
+        sav_lbl: "Nom du fichier final",
+        sav_hint: "Toutes les modifications seront fusionnées dans le document final.",
+        sav_btn: "Télécharger",
+        sheet_label: "Page",
+        download_png: "Télécharger Page",
+        prompt_new_text: "Entrez le nouveau texte :"
+      },
+      de: {
+        no_file: "Keine Datei geladen",
+        open_pdf: "PDF öffnen",
+        save_pdf: "PDF speichern",
+        sec_edit: "Bearbeitung",
+        nav_editor: "Editor & Signatur",
+        nav_organize: "Seiten ordnen",
+        nav_resize: "Seitengröße",
+        nav_merge: "PDFs verbinden",
+        nav_split: "Teilen / Extrahieren",
+        sec_alchemy: "Werkzeuge & Siegel",
+        nav_img2pdf: "Bilder zu PDF",
+        nav_images: "PDF zu Bildern",
+        nav_pagenum: "Seitenzahlen",
+        nav_watermark: "Wasserzeichen",
+        nav_metadata: "Metadaten",
+        stat_pages: "Seiten:",
+        stat_size: "Größe:",
+        offline_badge: "100% Sichere Offline-Engine",
+        drop_title: "PDF-Datei hier ablegen",
+        drop_sub1: "Oder klicken Sie zum Auswählen. Sie können auch",
+        drop_link_merge: "mehrere PDFs verbinden",
+        drop_or: "oder",
+        drop_link_img: "Bilder in PDF umwandeln",
+        drop_btn: "PDF-Dokument laden",
+        tool_move: "Bewegen",
+        tool_editpdf: "PDF-Text",
+        tool_addtext: "+ Text",
+        tool_draw: "Pinsel",
+        tool_highlight: "Marker",
+        tool_rect: "Rahmen",
+        tool_arrow: "Pfeil",
+        tool_whiteout: "Abdecken",
+        tool_sign: "Signieren",
+        tool_stamp: "Stempel",
+        size_thin: "Dünn",
+        size_med: "Mittel",
+        size_thick: "Dick",
+        size_extra: "Extra",
+        org_title: "Seiten ordnen, sortieren & drehen",
+        org_sub: "Karten ziehen und ablegen, um die Reihenfolge zu ändern.",
+        org_rotate_all: "Alle +90° drehen",
+        res_title: "Seitengröße vereinheitlichen",
+        res_sub: "Passen Sie alle Seiten an ein Standardformat an.",
+        res_preset: "Ziel-Papierformat",
+        res_orient: "Ausrichtung",
+        res_portrait: "Hochformat",
+        res_landscape: "Querformat",
+        res_fit: "Anpassungsmodus",
+        res_contain: "Einpassen & zentrieren",
+        res_stretch: "Auf ganze Seite strecken",
+        res_btn: "Auf alle Seiten anwenden",
+        mrg_title: "Mehrere PDFs verbinden",
+        mrg_sub: "Kombinieren Sie Dokumente und gleichen Sie Seitengrößen an.",
+        mrg_add: "PDF-Dateien hinzufügen",
+        mrg_empty: "Noch keine Dateien hinzugefügt.",
+        mrg_size_lbl: "Seitengröße:",
+        mrg_opt_a4: "Auf A4 standardisieren (Empfohlen)",
+        mrg_opt_letter: "Auf Letter standardisieren",
+        mrg_opt_legal: "Auf Legal standardisieren",
+        mrg_opt_orig: "Originalgröße beibehalten",
+        btn_clear: "Leeren",
+        mrg_btn: "Jetzt verbinden",
+        spl_title: "Seiten teilen & extrahieren",
+        spl_sub: "Erstellen Sie ein neues PDF mit den gewählten Seiten.",
+        spl_lbl: "Seitenbereich",
+        spl_hint: "Bindestriche für Bereiche (1-4) und Kommas (2, 5, 7).",
+        spl_btn: "Extrahieren & herunterladen",
+        i2p_title: "Bilder in PDF umwandeln",
+        i2p_sub: "JPG/PNG-Bilder in ein einheitliches PDF-Dokument umwandeln.",
+        i2p_add: "Bilder auswählen",
+        i2p_empty: "Noch keine Bilder ausgewählt.",
+        i2p_opt_a4: "Auf A4-Seite standardisieren",
+        i2p_opt_letter: "Auf Letter-Seite standardisieren",
+        i2p_opt_fit: "Seite an Bildgröße anpassen",
+        i2p_btn: "PDF erstellen & öffnen",
+        p2i_title: "Seiten als PNG exportieren",
+        p2i_sub: "Laden Sie jede Seite als hochauflösendes Bild herunter.",
+        pn_title: "Seitenzahlen einfügen",
+        pn_sub: "Fortlaufende Seitenzahlen auf allen Seiten einfügen.",
+        pn_format: "Textformat",
+        pn_opt_of: "Seite X von Y",
+        pn_opt_num: "Nur Zahl (1, 2, 3...)",
+        pn_pos: "Position",
+        pos_br: "Unten rechts",
+        pos_bc: "Unten Mitte",
+        pos_bl: "Unten links",
+        pos_tr: "Oben rechts",
+        pn_size: "Schriftgröße (pt)",
+        pn_btn: "Seitenzahlen anwenden",
+        wm_title: "Wasserzeichen-Stempel",
+        wm_sub: "Diagonales Wasserzeichen auf alle Seiten stempeln.",
+        wm_lbl: "Wasserzeichen-Text",
+        wm_size: "Größe (pt)",
+        wm_op: "Deckkraft",
+        wm_col: "Farbe",
+        wm_btn: "Wasserzeichen anwenden",
+        meta_title: "Metadaten & Datenschutz",
+        meta_sub: "Dokumenteigenschaften bearbeiten oder versteckte Daten löschen.",
+        meta_doc_title: "Dokumenttitel",
+        meta_author: "Autor",
+        meta_subject: "Betreff",
+        meta_wipe: "Metadaten löschen",
+        meta_save: "Speichern",
+        mod_txt_title: "PDF-Text überschreiben",
+        mod_txt_lbl: "Neuer Inhalt",
+        mod_txt_size: "Größe (px)",
+        mod_txt_style: "Stil",
+        mod_txt_norm: "Normal",
+        mod_txt_bold: "Fett",
+        mod_txt_col: "Farbe",
+        mod_txt_bg: "Hintergrund",
+        btn_cancel: "Abbrechen",
+        btn_apply: "Anwenden",
+        sig_title: "Unterschrift zeichnen",
+        sig_hint: "Tipp: Nutzen Sie 'Bewegen', um die Signatur zu verschieben.",
+        sig_clear: "Löschen",
+        sig_insert: "Signatur einfügen",
+        sav_title: "PDF speichern & exportieren",
+        sav_lbl: "Dateiname",
+        sav_hint: "Alle Änderungen werden im finalen PDF zusammengeführt.",
+        sav_btn: "Jetzt herunterladen",
+        sheet_label: "Seite",
+        download_png: "Seite laden",
+        prompt_new_text: "Neuen Text eingeben:"
+      },
+      ja: {
+        no_file: "PDFが読み込まれていません",
+        open_pdf: "PDFを開く",
+        save_pdf: "封印して保存",
+        sec_edit: "編集の術",
+        nav_editor: "編集・署名",
+        nav_organize: "ページ整理",
+        nav_resize: "ページサイズ統一",
+        nav_merge: "PDF結合",
+        nav_split: "分割・抽出",
+        sec_alchemy: "錬金・刻印",
+        nav_img2pdf: "画像をPDF化",
+        nav_images: "PDFを画像化",
+        nav_pagenum: "ページ番号",
+        nav_watermark: "透かしスタンプ",
+        nav_metadata: "メタデータ削除",
+        stat_pages: "ページ数:",
+        stat_size: "サイズ:",
+        offline_badge: "100% 安全なローカル処理",
+        drop_title: "ここにPDFファイルをドロップ",
+        drop_sub1: "またはクリックして選択します。",
+        drop_link_merge: "複数のPDFを結合",
+        drop_or: "や",
+        drop_link_img: "画像をPDFに変換",
+        drop_btn: "PDFドキュメントを読み込む",
+        tool_move: "移動",
+        tool_editpdf: "文字編集",
+        tool_addtext: "+ テキスト",
+        tool_draw: "ペン",
+        tool_highlight: "マーカー",
+        tool_rect: "枠線",
+        tool_arrow: "矢印",
+        tool_whiteout: "白塗り",
+        tool_sign: "署名",
+        tool_stamp: "印鑑・画像",
+        size_thin: "細",
+        size_med: "中",
+        size_thick: "太",
+        size_extra: "極太",
+        org_title: "ページの並び替え・回転",
+        org_sub: "カードをドラッグ＆ドロップして順番を変更できます。",
+        org_rotate_all: "全ページ +90°回転",
+        res_title: "ページサイズの統一",
+        res_sub: "すべてのページを標準サイズに揃えて見やすくします。",
+        res_preset: "出力用紙サイズ",
+        res_orient: "向き",
+        res_portrait: "縦向き (Portrait)",
+        res_landscape: "横向き (Landscape)",
+        res_fit: "調整モード",
+        res_contain: "中央に合わせる（比率維持）",
+        res_stretch: "ページ全体に引き伸ばす",
+        res_btn: "全ページにサイズを適用",
+        mrg_title: "複数のPDFを結合",
+        mrg_sub: "複数のPDFを1つにまとめ、ページサイズも自動で揃えます。",
+        mrg_add: "PDFを追加",
+        mrg_empty: "結合するファイルがまだありません。",
+        mrg_size_lbl: "結合時のサイズ:",
+        mrg_opt_a4: "A4サイズに統一（推奨）",
+        mrg_opt_letter: "レターサイズに統一",
+        mrg_opt_legal: "リーガルサイズに統一",
+        mrg_opt_orig: "元のサイズを維持",
+        btn_clear: "クリア",
+        mrg_btn: "今すぐ結合",
+        spl_title: "ページの分割・抽出",
+        spl_sub: "指定したページ範囲だけで新しいPDFを作成します。",
+        spl_lbl: "抽出するページ範囲",
+        spl_hint: "範囲はハイフン (1-4)、個別はカンマ (2, 5, 7) で指定。",
+        spl_btn: "抽出してダウンロード",
+        i2p_title: "画像をPDFに変換",
+        i2p_sub: "JPG/PNG画像を1つのPDFドキュメントにまとめます。",
+        i2p_add: "画像を選択",
+        i2p_empty: "画像が選択されていません。",
+        i2p_opt_a4: "A4サイズに統一",
+        i2p_opt_letter: "レターサイズに統一",
+        i2p_opt_fit: "各画像のサイズに合わせる",
+        i2p_btn: "PDFを作成して開く",
+        p2i_title: "ページをPNG画像で保存",
+        p2i_sub: "各ページを高画質なPNG画像としてダウンロードします。",
+        pn_title: "ページ番号の追加",
+        pn_sub: "すべてのページに連番を刻印します。",
+        pn_format: "表示形式",
+        pn_opt_of: "Page X of Y",
+        pn_opt_num: "数字のみ (1, 2, 3...)",
+        pn_pos: "配置位置",
+        pos_br: "右下",
+        pos_bc: "中央下",
+        pos_bl: "左下",
+        pos_tr: "右上",
+        pn_size: "文字サイズ (pt)",
+        pn_btn: "ページ番号を適用",
+        wm_title: "透かし（ウォーターマーク）",
+        wm_sub: "全ページに斜めの保護テキストを刻印します。",
+        wm_lbl: "透かしテキスト",
+        wm_size: "サイズ (pt)",
+        wm_op: "不透明度",
+        wm_col: "色",
+        wm_btn: "全ページに適用",
+        meta_title: "メタデータ管理・消去",
+        meta_sub: "内部プロパティの編集や隠し情報の完全消去を行います。",
+        meta_doc_title: "タイトル",
+        meta_author: "作成者",
+        meta_subject: "サブタイトル",
+        meta_wipe: "メタデータを完全消去",
+        meta_save: "プロパティを保存",
+        mod_txt_title: "PDF内のテキストを書き換え",
+        mod_txt_lbl: "新しいテキスト",
+        mod_txt_size: "サイズ (px)",
+        mod_txt_style: "太さ",
+        mod_txt_norm: "標準",
+        mod_txt_bold: "太字",
+        mod_txt_col: "文字色",
+        mod_txt_bg: "背景色",
+        btn_cancel: "キャンセル",
+        btn_apply: "変更を適用",
+        sig_title: "署名を描く",
+        sig_hint: "ヒント：「移動」ツールで署名の位置や大きさを調整できます。",
+        sig_clear: "消去",
+        sig_insert: "署名を挿入",
+        sav_title: "PDFを封印して保存",
+        sav_lbl: "保存ファイル名",
+        sav_hint: "すべての編集・署名・スタンプが統合されます。",
+        sav_btn: "ダウンロード",
+        sheet_label: "ページ",
+        download_png: "PNG保存",
+        prompt_new_text: "追加するテキストを入力してください:"
+      }
+    };
+
+    let currentLang = 'es';
+
+    function t(key) {
+      return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS.es[key] || key;
+    }
+
+    function changeLanguage(lang) {
+      if (!TRANSLATIONS[lang]) lang = 'es';
+      currentLang = lang;
+      localStorage.setItem('paperkage_lang', lang);
+      document.documentElement.lang = lang;
+      document.getElementById('languageSelector').value = lang;
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (TRANSLATIONS[lang][key]) {
+          el.textContent = TRANSLATIONS[lang][key];
+        }
+      });
+
+      if (!currentPdfBytes) {
+        document.getElementById('currentFileName').textContent = t('no_file');
+      }
+      if (pdfJsDoc) {
+        renderThumbnails();
+        if (activeTab === 'organize') renderOrganizeGrid();
+        if (activeTab === 'images') renderImagesGrid();
+      }
+    }
+
+    function initLanguage() {
+      const saved = localStorage.getItem('paperkage_lang');
+      if (saved && TRANSLATIONS[saved]) {
+        changeLanguage(saved);
+      } else {
+        const browserLang = (navigator.language || 'es').slice(0, 2).toLowerCase();
+        changeLanguage(TRANSLATIONS[browserLang] ? browserLang : 'es');
+      }
+    }
+
+    const PAGE_SIZES_PT = {
+      a4: [595.28, 841.89],
+      letter: [612, 792],
+      legal: [612, 1008],
+      a3: [841.89, 1190.55],
+      a5: [419.53, 595.28]
+    };
+
+    let currentPdfBytes = null;
+    let originalBaseFileName = 'Document';
+    let pdfJsDoc = null;
+    let currentPage = 1;
+    let totalPages = 0;
+    let currentZoom = 1.2;
+    let activeTool = 'cursor';
+    let activeTab = 'editor';
+
+    let pageAnnotations = {};
+    let selectedAnnotationIdx = null;
+    let interactionMode = null;
+    let dragOffset = { x: 0, y: 0 };
+    let currentPath = [];
+    let shapeStart = null;
+    let imageCache = {};
+    let activeTextEditTarget = null;
+
+    let mergeFilesQueue = [];
+    let img2pdfQueue = [];
+
+    const pdfRenderCanvas = document.getElementById('pdfRenderCanvas');
+    const pdfCtx = pdfRenderCanvas.getContext('2d');
+    const annotationCanvas = document.getElementById('annotationCanvas');
+    const annCtx = annotationCanvas.getContext('2d');
+    const detectedTextLayer = document.getElementById('detectedTextLayer');
+    const emptyState = document.getElementById('emptyState');
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3200);
+    }
+
+    function switchTab(tabId) {
+      activeTab = tabId;
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+
+      const views = ['editor', 'organize', 'resize', 'merge', 'split', 'img2pdf', 'images', 'pagenum', 'watermark', 'metadata'];
+      views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (v === tabId) {
+          el.classList.remove('hidden');
+          el.classList.add('flex');
+        } else {
+          el.classList.add('hidden');
+          el.classList.remove('flex');
+        }
+      });
+
+      if (tabId === 'merge' || tabId === 'img2pdf') {
+        emptyState.classList.add('hidden');
+      } else if (!currentPdfBytes) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+        if (tabId === 'organize') renderOrganizeGrid();
+        if (tabId === 'images') renderImagesGrid();
+        if (tabId === 'editor') renderCurrentPage();
+        if (tabId === 'metadata') loadMetadataFields();
+      }
+    }
+
+    // ==========================================
+    // DETECCIÓN Y EDICIÓN DE TEXTO NATIVO DEL PDF
+    // ==========================================
+    async function extractAndRenderTextHitboxes(page) {
+      detectedTextLayer.innerHTML = '';
+      if (activeTool !== 'edittext') {
+        detectedTextLayer.classList.add('hidden');
+        return;
+      }
+      detectedTextLayer.classList.remove('hidden');
+
+      const textContent = await page.getTextContent();
+      const unscaledViewport = page.getViewport({ scale: 1 });
+
+      textContent.items.forEach((item) => {
+        if (!item.str || item.str.trim() === '') return;
+
+        const tx = pdfjsLib.Util.transform(unscaledViewport.transform, item.transform);
+        const fontHeightPt = Math.hypot(tx[2], tx[3]);
+        const fontWidthPt = item.width || (item.str.length * fontHeightPt * 0.55);
+
+        const xNorm = tx[4] / unscaledViewport.width;
+        const yBottomNorm = tx[5] / unscaledViewport.height;
+        const hNorm = (fontHeightPt * 1.15) / unscaledViewport.height;
+        const wNorm = Math.max(0.015, fontWidthPt / unscaledViewport.width);
+        const yTopNorm = yBottomNorm - (fontHeightPt * 0.92) / unscaledViewport.height;
+
+        const box = document.createElement('div');
+        box.className = 'pdf-text-hitbox';
+        box.style.left = `${xNorm * 100}%`;
+        box.style.top = `${yTopNorm * 100}%`;
+        box.style.width = `${wNorm * 100}%`;
+        box.style.height = `${hNorm * 100}%`;
+        box.title = item.str;
+
+        box.onclick = (e) => {
+          e.stopPropagation();
+          openEditPdfTextModal({
+            str: item.str,
+            xNorm,
+            yTopNorm,
+            yBottomNorm,
+            wNorm,
+            hNorm,
+            fontHeightPt
+          });
+        };
+
+        detectedTextLayer.appendChild(box);
+      });
+    }
+
+    function openEditPdfTextModal(targetData) {
+      activeTextEditTarget = targetData;
+      const input = document.getElementById('editPdfTextInput');
+      const sizeInput = document.getElementById('editPdfFontSize');
+
+      input.value = targetData.str;
+      sizeInput.value = Math.max(8, Math.round(targetData.fontHeightPt));
+      document.getElementById('editPdfFontWeight').value = '400';
+      document.getElementById('editPdfTextColor').value = '#0f172a';
+      document.getElementById('editPdfBgColor').value = '#ffffff';
+
+      document.getElementById('editPdfTextModal').classList.remove('hidden');
+      setTimeout(() => { input.focus(); input.select(); }, 40);
+    }
+
+    function closeEditPdfTextModal() {
+      document.getElementById('editPdfTextModal').classList.add('hidden');
+      activeTextEditTarget = null;
+    }
+
+    function applyPdfTextReplacement() {
+      if (!activeTextEditTarget) return;
+      const newText = document.getElementById('editPdfTextInput').value;
+      const fontSizePt = parseFloat(document.getElementById('editPdfFontSize').value) || 12;
+      const fontWeight = document.getElementById('editPdfFontWeight').value;
+      const textColor = document.getElementById('editPdfTextColor').value;
+      const bgColor = document.getElementById('editPdfBgColor').value;
+
+      if (!pageAnnotations[currentPage]) pageAnnotations[currentPage] = [];
+
+      pageAnnotations[currentPage].push({
+        type: 'text_replace',
+        x: activeTextEditTarget.xNorm,
+        y: activeTextEditTarget.yBottomNorm,
+        coverX: activeTextEditTarget.xNorm - 0.003,
+        coverY: activeTextEditTarget.yTopNorm - 0.002,
+        coverW: activeTextEditTarget.wNorm + 0.008,
+        coverH: activeTextEditTarget.hNorm + 0.004,
+        text: newText,
+        fontSizePt,
+        fontWeight,
+        color: textColor,
+        bgColor
+      });
+
+      closeEditPdfTextModal();
+      redrawAnnotations();
+      showToast('OK');
+    }
+
+    // ==========================================
+    // REDIMENSIONAMIENTO DE PÁGINAS PDF
+    // ==========================================
+    async function buildResizedPdfBytes(sourceBytes, presetKey, orientation = 'portrait', fitMode = 'contain') {
+      const srcDoc = await PDFLib.PDFDocument.load(sourceBytes);
+      const outDoc = await PDFLib.PDFDocument.create();
+
+      let [targetW, targetH] = PAGE_SIZES_PT[presetKey] || PAGE_SIZES_PT.a4;
+      if (orientation === 'landscape') {
+        [targetW, targetH] = [targetH, targetW];
+      }
+
+      const srcPages = srcDoc.getPages();
+      for (let i = 0; i < srcPages.length; i++) {
+        const srcPage = srcPages[i];
+        const embeddedPage = await outDoc.embedPage(srcPage);
+        const { width: origW, height: origH } = srcPage.getSize();
+
+        const newPage = outDoc.addPage([targetW, targetH]);
+
+        let drawW = targetW;
+        let drawH = targetH;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (fitMode === 'contain') {
+          const scale = Math.min(targetW / origW, targetH / origH);
+          drawW = origW * scale;
+          drawH = origH * scale;
+          offsetX = (targetW - drawW) / 2;
+          offsetY = (targetH - drawH) / 2;
+        }
+
+        newPage.drawPage(embeddedPage, {
+          x: offsetX,
+          y: offsetY,
+          width: drawW,
+          height: drawH
+        });
+      }
+
+      return await outDoc.save();
+    }
+
+    async function executePageResize() {
+      if (!currentPdfBytes) return;
+      const preset = document.getElementById('resizeTargetPreset').value;
+      const orientation = document.getElementById('resizeOrientation').value;
+      const fitMode = document.getElementById('resizeFitMode').value;
+
+      const resizedBytes = await buildResizedPdfBytes(currentPdfBytes, preset, orientation, fitMode);
+      await loadPdfFromBytes(resizedBytes);
+      switchTab('editor');
+      showToast(`→ ${preset.toUpperCase()}`);
+    }
+
+    // ==========================================
+    // CARGA DE ARCHIVO PDF
+    // ==========================================
+    const dropZone = document.getElementById('dropZone');
+    const globalInput = document.getElementById('globalPdfInput');
+
+    dropZone.addEventListener('click', () => globalInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-[#f72585]'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-[#f72585]'));
+    dropZone.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-[#f72585]');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') await loadPdfFile(file);
+    });
+
+    globalInput.addEventListener('change', async (e) => {
+      if (e.target.files[0]) await loadPdfFile(e.target.files[0]);
+    });
+
+    async function loadPdfFile(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      originalBaseFileName = file.name.replace(/\.pdf$/i, '');
+      document.getElementById('currentFileName').textContent = file.name;
+      pageAnnotations = {};
+      selectedAnnotationIdx = null;
+      await loadPdfFromBytes(new Uint8Array(arrayBuffer));
+      showToast(file.name);
+    }
+
+    async function loadPdfFromBytes(uint8Array) {
+      currentPdfBytes = uint8Array;
+      pdfJsDoc = await pdfjsLib.getDocument({ data: currentPdfBytes.slice() }).promise;
+      totalPages = pdfJsDoc.numPages;
+      currentPage = Math.min(currentPage, totalPages) || 1;
+      selectedAnnotationIdx = null;
+
+      document.getElementById('statPages').textContent = totalPages;
+      document.getElementById('statSize').textContent = (currentPdfBytes.byteLength / 1024 / 1024).toFixed(2) + ' MB';
+      document.getElementById('exportPdfBtn').disabled = false;
+      emptyState.classList.add('hidden');
+
+      await renderThumbnails();
+      await renderCurrentPage();
+      if (activeTab === 'organize') renderOrganizeGrid();
+      if (activeTab === 'images') renderImagesGrid();
+      if (activeTab === 'metadata') loadMetadataFields();
+    }
+
+    // ==========================================
+    // RENDERIZADO EN EL EDITOR Y ANOTACIONES
+    // ==========================================
+    async function renderCurrentPage() {
+      if (!pdfJsDoc) return;
+      const page = await pdfJsDoc.getPage(currentPage);
+      const viewport = page.getViewport({ scale: currentZoom });
+
+      pdfRenderCanvas.width = viewport.width;
+      pdfRenderCanvas.height = viewport.height;
+      annotationCanvas.width = viewport.width;
+      annotationCanvas.height = viewport.height;
+
+      await page.render({ canvasContext: pdfCtx, viewport }).promise;
+
+      document.getElementById('pageIndicator').textContent = `${currentPage} / ${totalPages}`;
+      document.getElementById('zoomIndicator').textContent = `${Math.round(currentZoom * 100)}%`;
+
+      redrawAnnotations();
+      highlightActiveThumbnail();
+      await extractAndRenderTextHitboxes(page);
+    }
+
+    async function renderThumbnails() {
+      const sidebar = document.getElementById('thumbnailSidebar');
+      sidebar.innerHTML = '';
+      for (let i = 1; i <= totalPages; i++) {
+        const page = await pdfJsDoc.getPage(i);
+        const viewport = page.getViewport({ scale: 0.22 });
+        const wrapper = document.createElement('div');
+        wrapper.id = `thumb-${i}`;
+        wrapper.className = 'p-2 rounded-2xl border border-blue-500/20 hover:border-[#f72585]/60 cursor-pointer transition flex flex-col items-center bg-[#0e1124]/60';
+        wrapper.onclick = () => { currentPage = i; selectedAnnotationIdx = null; renderCurrentPage(); };
+
+        const c = document.createElement('canvas');
+        c.width = viewport.width;
+        c.height = viewport.height;
+        c.className = 'rounded-lg shadow-md mb-1.5';
+        await page.render({ canvasContext: c.getContext('2d'), viewport }).promise;
+
+        const label = document.createElement('span');
+        label.className = 'text-[11px] font-bold text-slate-400';
+        label.textContent = `${t('sheet_label')} ${i}`;
+
+        wrapper.appendChild(c);
+        wrapper.appendChild(label);
+        sidebar.appendChild(wrapper);
+      }
+      highlightActiveThumbnail();
+    }
+
+    function highlightActiveThumbnail() {
+      for (let i = 1; i <= totalPages; i++) {
+        const el = document.getElementById(`thumb-${i}`);
+        if (!el) continue;
+        el.classList.toggle('border-[#f72585]', i === currentPage);
+        el.classList.toggle('bg-[#4361ee]/20', i === currentPage);
+      }
+    }
+
+    function changePage(delta) {
+      const next = currentPage + delta;
+      if (next >= 1 && next <= totalPages) {
+        currentPage = next;
+        selectedAnnotationIdx = null;
+        updateSelectionUI();
+        renderCurrentPage();
+      }
+    }
+
+    function changeZoom(delta) {
+      currentZoom = Math.min(2.6, Math.max(0.6, currentZoom + delta));
+      renderCurrentPage();
+    }
+
+    async function setEditorTool(tool) {
+      activeTool = tool;
+      if (tool !== 'cursor') {
+        selectedAnnotationIdx = null;
+        updateSelectionUI();
+        redrawAnnotations();
+      }
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      const btn = document.getElementById(`tool-${tool}`);
+      if (btn) btn.classList.add('active');
+      annotationCanvas.style.cursor = tool === 'cursor' ? 'default' : (tool === 'text' ? 'text' : 'crosshair');
+
+      if (pdfJsDoc) {
+        const page = await pdfJsDoc.getPage(currentPage);
+        await extractAndRenderTextHitboxes(page);
+      }
+    }
+
+    function updateSelectionUI() {
+      const delBtn = document.getElementById('btnDeleteSelected');
+      if (selectedAnnotationIdx !== null) delBtn.classList.remove('hidden');
+      else delBtn.classList.add('hidden');
+    }
+
+    function getItemBounds(item) {
+      const w = annotationCanvas.width;
+      const h = annotationCanvas.height;
+      if (item.type === 'signature' || item.type === 'image') {
+        return { x: item.x, y: item.y, w: item.w, h: item.h };
+      }
+      if (item.type === 'text') {
+        annCtx.font = `600 ${item.fontSize}px Plus Jakarta Sans, sans-serif`;
+        const textWidth = annCtx.measureText(item.text).width / w;
+        const textHeight = (item.fontSize * 1.15) / h;
+        return { x: item.x, y: item.y - textHeight * 0.85, w: textWidth, h: textHeight };
+      }
+      if (item.type === 'text_replace') {
+        const scaledPx = item.fontSizePt * currentZoom;
+        annCtx.font = `${item.fontWeight} ${scaledPx}px Helvetica, Arial, sans-serif`;
+        const textWidth = Math.max(item.coverW, annCtx.measureText(item.text).width / w);
+        const textHeight = Math.max(item.coverH, (scaledPx * 1.15) / h);
+        return { x: item.x, y: item.y - (scaledPx * 0.85) / h, w: textWidth, h: textHeight };
+      }
+      return null;
+    }
+
+    annotationCanvas.addEventListener('mousedown', (e) => {
+      if (!pdfJsDoc || activeTool === 'edittext') return;
+      const rect = annotationCanvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / annotationCanvas.width;
+      const y = (e.clientY - rect.top) / annotationCanvas.height;
+      const color = document.getElementById('AnnotationColor').value;
+      const size = parseInt(document.getElementById('AnnotationSize').value, 10);
+
+      if (activeTool === 'cursor') {
+        const list = pageAnnotations[currentPage] || [];
+        if (selectedAnnotationIdx !== null && list[selectedAnnotationIdx]) {
+          const b = getItemBounds(list[selectedAnnotationIdx]);
+          if (b && Math.abs(x - (b.x + b.w)) < 0.025 && Math.abs(y - (b.y + b.h)) < 0.025) {
+            interactionMode = 'resizing';
+            return;
+          }
+        }
+
+        let found = null;
+        for (let i = list.length - 1; i >= 0; i--) {
+          const b = getItemBounds(list[i]);
+          if (b && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
+            found = i;
+            dragOffset = { x: x - list[i].x, y: y - list[i].y };
+            break;
+          }
+        }
+        selectedAnnotationIdx = found;
+        interactionMode = found !== null ? 'dragging' : null;
+        updateSelectionUI();
+        redrawAnnotations();
+        return;
+      }
+
+      if (activeTool === 'text') {
+        const userText = prompt(t('prompt_new_text'));
+        if (userText && userText.trim() !== '') {
+          if (!pageAnnotations[currentPage]) pageAnnotations[currentPage] = [];
+          pageAnnotations[currentPage].push({
+            type: 'text',
+            x,
+            y,
+            text: userText,
+            color,
+            fontSize: size * 4 + 8
+          });
+          selectedAnnotationIdx = pageAnnotations[currentPage].length - 1;
+          setEditorTool('cursor');
+          updateSelectionUI();
+          redrawAnnotations();
+        }
+        return;
+      }
+
+      if (activeTool === 'draw' || activeTool === 'highlight') {
+        interactionMode = 'drawing';
+        currentPath = [{ x, y }];
+        return;
+      }
+
+      if (activeTool === 'rect' || activeTool === 'arrow' || activeTool === 'whiteout') {
+        interactionMode = 'shaping';
+        shapeStart = { x, y };
+      }
+    });
+
+    annotationCanvas.addEventListener('mousemove', (e) => {
+      if (!interactionMode) return;
+      const rect = annotationCanvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / annotationCanvas.width;
+      const y = (e.clientY - rect.top) / annotationCanvas.height;
+
+      if (interactionMode === 'dragging' && selectedAnnotationIdx !== null) {
+        const item = pageAnnotations[currentPage][selectedAnnotationIdx];
+        item.x = x - dragOffset.x;
+        item.y = y - dragOffset.y;
+        redrawAnnotations();
+        return;
+      }
+
+      if (interactionMode === 'resizing' && selectedAnnotationIdx !== null) {
+        const item = pageAnnotations[currentPage][selectedAnnotationIdx];
+        if (item.type === 'signature' || item.type === 'image') {
+          item.w = Math.max(0.04, x - item.x);
+          item.h = Math.max(0.03, y - item.y);
+        } else if (item.type === 'text') {
+          const dist = Math.max(10, (y - item.y + 0.04) * annotationCanvas.height);
+          item.fontSize = Math.min(96, Math.max(10, Math.round(dist)));
+        } else if (item.type === 'text_replace') {
+          const distPt = Math.max(8, ((y - item.y + 0.03) * annotationCanvas.height) / currentZoom);
+          item.fontSizePt = Math.min(96, Math.max(6, Math.round(distPt)));
+        }
+        redrawAnnotations();
+        return;
+      }
+
+      if (interactionMode === 'drawing') {
+        currentPath.push({ x, y });
+        redrawAnnotations();
+        drawItemOnContext(annCtx, {
+          type: activeTool,
+          points: currentPath,
+          color: document.getElementById('AnnotationColor').value,
+          size: parseInt(document.getElementById('AnnotationSize').value, 10)
+        }, annotationCanvas.width, annotationCanvas.height, 1, currentZoom);
+        return;
+      }
+
+      if (interactionMode === 'shaping' && shapeStart) {
+        redrawAnnotations();
+        drawItemOnContext(annCtx, {
+          type: activeTool,
+          x1: shapeStart.x,
+          y1: shapeStart.y,
+          x2: x,
+          y2: y,
+          color: activeTool === 'whiteout' ? '#ffffff' : document.getElementById('AnnotationColor').value,
+          size: parseInt(document.getElementById('AnnotationSize').value, 10)
+        }, annotationCanvas.width, annotationCanvas.height, 1, currentZoom);
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (!interactionMode) return;
+      const rect = annotationCanvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / annotationCanvas.width;
+      const y = (e.clientY - rect.top) / annotationCanvas.height;
+
+      if (interactionMode === 'drawing' && currentPath.length > 1) {
+        if (!pageAnnotations[currentPage]) pageAnnotations[currentPage] = [];
+        pageAnnotations[currentPage].push({
+          type: activeTool,
+          points: currentPath,
+          color: document.getElementById('AnnotationColor').value,
+          size: parseInt(document.getElementById('AnnotationSize').value, 10)
+        });
+      }
+
+      if (interactionMode === 'shaping' && shapeStart) {
+        if (Math.abs(x - shapeStart.x) > 0.005 || Math.abs(y - shapeStart.y) > 0.005) {
+          if (!pageAnnotations[currentPage]) pageAnnotations[currentPage] = [];
+          pageAnnotations[currentPage].push({
+            type: activeTool,
+            x1: shapeStart.x,
+            y1: shapeStart.y,
+            x2: x,
+            y2: y,
+            color: activeTool === 'whiteout' ? '#ffffff' : document.getElementById('AnnotationColor').value,
+            size: parseInt(document.getElementById('AnnotationSize').value, 10)
+          });
+        }
+      }
+
+      interactionMode = null;
+      currentPath = [];
+      shapeStart = null;
+      redrawAnnotations();
+    });
+
+    function drawItemOnContext(ctx, item, w, h, scaleMult = 1, zoomFactor = 1) {
+      ctx.save();
+      if (item.type === 'draw' || item.type === 'highlight') {
+        ctx.beginPath();
+        ctx.strokeStyle = item.color;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.globalAlpha = item.type === 'highlight' ? 0.35 : 1.0;
+        ctx.lineWidth = (item.type === 'highlight' ? item.size * 4 : item.size) * scaleMult;
+        item.points.forEach((pt, idx) => {
+          if (idx === 0) ctx.moveTo(pt.x * w, pt.y * h);
+          else ctx.lineTo(pt.x * w, pt.y * h);
+        });
+        ctx.stroke();
+      } else if (item.type === 'rect') {
+        ctx.strokeStyle = item.color;
+        ctx.lineWidth = item.size * scaleMult;
+        ctx.strokeRect(item.x1 * w, item.y1 * h, (item.x2 - item.x1) * w, (item.y2 - item.y1) * h);
+      } else if (item.type === 'whiteout') {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(item.x1 * w, item.y1 * h, (item.x2 - item.x1) * w, (item.y2 - item.y1) * h);
+      } else if (item.type === 'arrow') {
+        const x1 = item.x1 * w, y1 = item.y1 * h, x2 = item.x2 * w, y2 = item.y2 * h;
+        const headlen = (10 + item.size * 2) * scaleMult;
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        ctx.strokeStyle = item.color;
+        ctx.fillStyle = item.color;
+        ctx.lineWidth = item.size * scaleMult;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+      } else if (item.type === 'text') {
+        ctx.fillStyle = item.color;
+        ctx.font = `600 ${item.fontSize * scaleMult}px Plus Jakarta Sans, sans-serif`;
+        ctx.fillText(item.text, item.x * w, item.y * h);
+      } else if (item.type === 'text_replace') {
+        ctx.fillStyle = item.bgColor || '#ffffff';
+        ctx.fillRect(item.coverX * w, item.coverY * h, item.coverW * w, item.coverH * h);
+
+        const pxSize = item.fontSizePt * zoomFactor;
+        ctx.fillStyle = item.color || '#0f172a';
+        ctx.font = `${item.fontWeight || '400'} ${pxSize}px Helvetica, Arial, sans-serif`;
+        ctx.fillText(item.text, item.x * w, item.y * h);
+      } else if (item.type === 'signature' || item.type === 'image') {
+        if (imageCache[item.dataUrl]) {
+          ctx.drawImage(imageCache[item.dataUrl], item.x * w, item.y * h, item.w * w, item.h * h);
+        } else {
+          const img = new Image();
+          img.onload = () => {
+            imageCache[item.dataUrl] = img;
+            redrawAnnotations();
+          };
+          img.src = item.dataUrl;
+        }
+      }
+      ctx.restore();
+    }
+
+    function redrawAnnotations() {
+      annCtx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+      const list = pageAnnotations[currentPage] || [];
+      const w = annotationCanvas.width;
+      const h = annotationCanvas.height;
+
+      list.forEach((item, idx) => {
+        drawItemOnContext(annCtx, item, w, h, 1, currentZoom);
+
+        if (idx === selectedAnnotationIdx && activeTool === 'cursor') {
+          const b = getItemBounds(item);
+          if (b) {
+            annCtx.save();
+            annCtx.strokeStyle = '#f72585';
+            annCtx.lineWidth = 1.5;
+            annCtx.setLineDash([4, 3]);
+            annCtx.strokeRect(b.x * w - 4, b.y * h - 4, b.w * w + 8, b.h * h + 8);
+            annCtx.setLineDash([]);
+            annCtx.fillStyle = '#00f5d4';
+            annCtx.fillRect((b.x + b.w) * w - 1, (b.y + b.h) * h - 1, 9, 9);
+            annCtx.restore();
+          }
+        }
+      });
+    }
+
+    function undoAnnotation() {
+      if (pageAnnotations[currentPage] && pageAnnotations[currentPage].length > 0) {
+        pageAnnotations[currentPage].pop();
+        selectedAnnotationIdx = null;
+        updateSelectionUI();
+        redrawAnnotations();
+      }
+    }
+
+    function deleteSelectedAnnotation() {
+      if (selectedAnnotationIdx !== null && pageAnnotations[currentPage]) {
+        pageAnnotations[currentPage].splice(selectedAnnotationIdx, 1);
+        selectedAnnotationIdx = null;
+        updateSelectionUI();
+        redrawAnnotations();
+      }
+    }
+
+    function clearPageAnnotations() {
+      pageAnnotations[currentPage] = [];
+      selectedAnnotationIdx = null;
+      updateSelectionUI();
+      redrawAnnotations();
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undoAnnotation();
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedAnnotationIdx !== null) {
+          e.preventDefault();
+          deleteSelectedAnnotation();
+        }
+      } else if (activeTab === 'editor' && pdfJsDoc) {
+        if (e.key === 'ArrowRight') changePage(1);
+        if (e.key === 'ArrowLeft') changePage(-1);
+      }
+    });
+
+    document.getElementById('stampImageInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file || !pdfJsDoc) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target.result;
+        const img = new Image();
+        img.onload = () => {
+          imageCache[dataUrl] = img;
+          const aspect = img.height / img.width;
+          const wNorm = 0.22;
+          const hNorm = wNorm * aspect * (annotationCanvas.width / annotationCanvas.height);
+          if (!pageAnnotations[currentPage]) pageAnnotations[currentPage] = [];
+          pageAnnotations[currentPage].push({
+            type: 'image',
+            dataUrl,
+            x: 0.38,
+            y: 0.40,
+            w: wNorm,
+            h: hNorm
+          });
+          selectedAnnotationIdx = pageAnnotations[currentPage].length - 1;
+          setEditorTool('cursor');
+          updateSelectionUI();
+          redrawAnnotations();
+        };
+        img.src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    });
+
+    // ==========================================
+    // MODAL DE FIRMA
+    // ==========================================
+    const sigCanvas = document.getElementById('signaturePad');
+    const sigCtx = sigCanvas.getContext('2d');
+    let sigDrawing = false;
+
+    sigCtx.strokeStyle = '#0f172a';
+    sigCtx.lineWidth = 2.5;
+    sigCtx.lineCap = 'round';
+
+    sigCanvas.addEventListener('mousedown', (e) => {
+      sigDrawing = true;
+      const r = sigCanvas.getBoundingClientRect();
+      sigCtx.beginPath();
+      sigCtx.moveTo(e.clientX - r.left, e.clientY - r.top);
+    });
+    sigCanvas.addEventListener('mousemove', (e) => {
+      if (!sigDrawing) return;
+      const r = sigCanvas.getBoundingClientRect();
+      sigCtx.lineTo(e.clientX - r.left, e.clientY - r.top);
+      sigCtx.stroke();
+    });
+    window.addEventListener('mouseup', () => sigDrawing = false);
+
+    function openSignatureModal() {
+      document.getElementById('signatureModal').classList.remove('hidden');
+      clearSignaturePad();
+    }
+    function closeSignatureModal() {
+      document.getElementById('signatureModal').classList.add('hidden');
+    }
+    function clearSignaturePad() {
+      sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+    }
+    function insertSignatureToPage() {
+      const dataUrl = sigCanvas.toDataURL('image/png');
+      const img = new Image();
+      img.onload = () => {
+        imageCache[dataUrl] = img;
+        if (!pageAnnotations[currentPage]) pageAnnotations[currentPage] = [];
+        pageAnnotations[currentPage].push({
+          type: 'signature',
+          dataUrl,
+          x: 0.58,
+          y: 0.76,
+          w: 0.28,
+          h: 0.12
+        });
+        selectedAnnotationIdx = pageAnnotations[currentPage].length - 1;
+        setEditorTool('cursor');
+        updateSelectionUI();
+        closeSignatureModal();
+        redrawAnnotations();
+      };
+      img.src = dataUrl;
+    }
+
+    // ==========================================
+    // ORGANIZAR PÁGINAS
+    // ==========================================
+    let draggedPageIdx = null;
+
+    async function renderOrganizeGrid() {
+      if (!pdfJsDoc) return;
+      const grid = document.getElementById('organizeGrid');
+      grid.innerHTML = '';
+
+      for (let i = 1; i <= totalPages; i++) {
+        const page = await pdfJsDoc.getPage(i);
+        const viewport = page.getViewport({ scale: 0.3 });
+
+        const card = document.createElement('div');
+        card.draggable = true;
+        card.dataset.idx = i - 1;
+        card.className = 'cyber-panel p-3 rounded-2xl flex flex-col items-center justify-between group hover:border-[#f72585]/60 transition cursor-grab active:cursor-grabbing';
+
+        card.addEventListener('dragstart', () => { draggedPageIdx = i - 1; card.classList.add('opacity-50'); });
+        card.addEventListener('dragend', () => { card.classList.remove('opacity-50'); });
+        card.addEventListener('dragover', (e) => { e.preventDefault(); card.classList.add('drag-over-card'); });
+        card.addEventListener('dragleave', () => { card.classList.remove('drag-over-card'); });
+        card.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          card.classList.remove('drag-over-card');
+          const targetIdx = parseInt(card.dataset.idx, 10);
+          if (draggedPageIdx !== null && draggedPageIdx !== targetIdx) {
+            await reorderPages(draggedPageIdx, targetIdx);
+          }
+        });
+
+        const c = document.createElement('canvas');
+        c.width = viewport.width;
+        c.height = viewport.height;
+        c.className = 'rounded-lg shadow-md mb-3 max-h-48 object-contain pointer-events-none';
+        await page.render({ canvasContext: c.getContext('2d'), viewport }).promise;
+
+        const footer = document.createElement('div');
+        footer.className = 'w-full flex items-center justify-between pt-2 border-t border-blue-500/20';
+        footer.innerHTML = `
+          <span class="text-xs font-bold text-blue-200">${t('sheet_label')} ${i}</span>
+          <div class="flex items-center gap-1">
+            <button onclick="rotateSinglePage(${i - 1}, 90)" class="p-1.5 rounded-lg bg-[#141936] hover:bg-[#4361ee] text-slate-200 transition">
+              <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="duplicateSinglePage(${i - 1})" class="p-1.5 rounded-lg bg-[#141936] hover:bg-[#00f5d4] hover:text-slate-950 text-slate-200 transition">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="deleteSinglePage(${i - 1})" class="p-1.5 rounded-lg bg-[#141936] hover:bg-[#ef4444] text-slate-200 transition">
+              <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+
+        card.appendChild(c);
+        card.appendChild(footer);
+        grid.appendChild(card);
+      }
+      lucide.createIcons();
+    }
+
+    async function reorderPages(fromIdx, toIdx) {
+      const srcDoc = await PDFLib.PDFDocument.load(currentPdfBytes);
+      const newDoc = await PDFLib.PDFDocument.create();
+      const order = srcDoc.getPageIndices();
+      const [moved] = order.splice(fromIdx, 1);
+      order.splice(toIdx, 0, moved);
+
+      const copied = await newDoc.copyPages(srcDoc, order);
+      copied.forEach(p => newDoc.addPage(p));
+      await loadPdfFromBytes(await newDoc.save());
+    }
+
+    async function rotateSinglePage(pageIndex, deg) {
+      const pdfDoc = await PDFLib.PDFDocument.load(currentPdfBytes);
+      const page = pdfDoc.getPage(pageIndex);
+      page.setRotation(PDFLib.degrees((page.getRotation().angle + deg) % 360));
+      await loadPdfFromBytes(await pdfDoc.save());
+    }
+
+    async function rotateAllPages(deg) {
+      const pdfDoc = await PDFLib.PDFDocument.load(currentPdfBytes);
+      pdfDoc.getPages().forEach(p => p.setRotation(PDFLib.degrees((p.getRotation().angle + deg) % 360)));
+      await loadPdfFromBytes(await pdfDoc.save());
+    }
+
+    async function deleteSinglePage(pageIndex) {
+      if (totalPages <= 1) return;
+      const pdfDoc = await PDFLib.PDFDocument.load(currentPdfBytes);
+      pdfDoc.removePage(pageIndex);
+      await loadPdfFromBytes(await pdfDoc.save());
+    }
+
+    async function duplicateSinglePage(pageIndex) {
+      const pdfDoc = await PDFLib.PDFDocument.load(currentPdfBytes);
+      const [copied] = await pdfDoc.copyPages(pdfDoc, [pageIndex]);
+      pdfDoc.insertPage(pageIndex + 1, copied);
+      await loadPdfFromBytes(await pdfDoc.save());
+    }
+
+    // ==========================================
+    // UNIR PDFs (MERGE)
+    // ==========================================
+    document.getElementById('mergeFilesInput').addEventListener('change', async (e) => {
+      for (const file of e.target.files) {
+        const buffer = await file.arrayBuffer();
+        mergeFilesQueue.push({ name: file.name, size: file.size, bytes: new Uint8Array(buffer) });
+      }
+      renderMergeQueue();
+      e.target.value = '';
+    });
+
+    function renderMergeQueue() {
+      const container = document.getElementById('mergeList');
+      if (mergeFilesQueue.length === 0) {
+        container.innerHTML = `<p class="text-sm text-slate-500 text-center py-14">${t('mrg_empty')}</p>`;
+        return;
+      }
+      container.innerHTML = '';
+      mergeFilesQueue.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-3 rounded-xl bg-[#141936]/90 border border-[#4361ee]/30';
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="w-6 h-6 rounded-full bg-[#f72585]/20 text-[#ff66b2] text-xs font-bold flex items-center justify-center">${index + 1}</span>
+            <div>
+              <p class="text-xs font-bold text-white">${item.name}</p>
+              <p class="text-[10px] text-slate-400">${(item.size / 1024).toFixed(1)} KB</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button onclick="moveMergeItem(${index}, -1)" class="p-1.5 hover:bg-[#4361ee]/30 rounded-lg text-slate-300"><i data-lucide="arrow-up" class="w-3.5 h-3.5"></i></button>
+            <button onclick="moveMergeItem(${index}, 1)" class="p-1.5 hover:bg-[#4361ee]/30 rounded-lg text-slate-300"><i data-lucide="arrow-down" class="w-3.5 h-3.5"></i></button>
+            <button onclick="removeMergeItem(${index})" class="p-1.5 hover:bg-[#ef4444]/30 rounded-lg text-[#ef4444]"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+      lucide.createIcons();
+    }
+
+    function moveMergeItem(idx, dir) {
+      const target = idx + dir;
+      if (target < 0 || target >= mergeFilesQueue.length) return;
+      [mergeFilesQueue[idx], mergeFilesQueue[target]] = [mergeFilesQueue[target], mergeFilesQueue[idx]];
+      renderMergeQueue();
+    }
+    function removeMergeItem(idx) { mergeFilesQueue.splice(idx, 1); renderMergeQueue(); }
+    function clearMergeList() { mergeFilesQueue = []; renderMergeQueue(); }
+
+    async function executeMerge() {
+      if (mergeFilesQueue.length < 2) return;
+      const targetSize = document.getElementById('mergePageSize').value;
+      const mergedPdf = await PDFLib.PDFDocument.create();
+
+      for (const item of mergeFilesQueue) {
+        const doc = await PDFLib.PDFDocument.load(item.bytes);
+
+        if (targetSize === 'original') {
+          const copiedPages = await mergedPdf.copyPages(doc, doc.getPageIndices());
+          copiedPages.forEach(p => mergedPdf.addPage(p));
+        } else {
+          const [targetW, targetH] = PAGE_SIZES_PT[targetSize] || PAGE_SIZES_PT.a4;
+          const srcPages = doc.getPages();
+          for (let i = 0; i < srcPages.length; i++) {
+            const srcPage = srcPages[i];
+            const embeddedPage = await mergedPdf.embedPage(srcPage);
+            const { width: origW, height: origH } = srcPage.getSize();
+
+            const isLandscape = origW > origH;
+            const pageW = isLandscape ? targetH : targetW;
+            const pageH = isLandscape ? targetW : targetH;
+
+            const newPage = mergedPdf.addPage([pageW, pageH]);
+            const scale = Math.min(pageW / origW, pageH / origH);
+            const drawW = origW * scale;
+            const drawH = origH * scale;
+
+            newPage.drawPage(embeddedPage, {
+              x: (pageW - drawW) / 2,
+              y: (pageH - drawH) / 2,
+              width: drawW,
+              height: drawH
+            });
+          }
+        }
+      }
+
+      const mergedBytes = await mergedPdf.save();
+      originalBaseFileName = mergeFilesQueue[0].name.replace(/\.pdf$/i, '') + '_Merged';
+      document.getElementById('currentFileName').textContent = `${originalBaseFileName}.pdf`;
+      await loadPdfFromBytes(mergedBytes);
+      switchTab('editor');
+      showToast('OK');
+    }
+
+    // ==========================================
+    // DIVIDIR Y EXTRAER PÁGINAS
+    // ==========================================
+    async function executeSplit() {
+      if (!currentPdfBytes) return;
+      const rawRange = document.getElementById('splitRangeInput').value.trim();
+      if (!rawRange) return;
+
+      const indices = new Set();
+      for (const part of rawRange.split(',')) {
+        if (part.includes('-')) {
+          const [start, end] = part.split('-').map(n => parseInt(n.trim(), 10));
+          if (!isNaN(start) && !isNaN(end)) {
+            for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
+              if (i >= 1 && i <= totalPages) indices.add(i - 1);
+            }
+          }
+        } else {
+          const num = parseInt(part.trim(), 10);
+          if (!isNaN(num) && num >= 1 && num <= totalPages) indices.add(num - 1);
+        }
+      }
+
+      if (indices.size === 0) return;
+
+      const srcDoc = await PDFLib.PDFDocument.load(currentPdfBytes);
+      const newDoc = await PDFLib.PDFDocument.create();
+      const copied = await newDoc.copyPages(srcDoc, Array.from(indices));
+      copied.forEach(p => newDoc.addPage(p));
+
+      downloadBytes(await newDoc.save(), `${originalBaseFileName}_Split.pdf`);
+      showToast('OK');
+    }
+
+    // ==========================================
+    // IMÁGENES A PDF
+    // ==========================================
+    document.getElementById('img2pdfInput').addEventListener('change', async (e) => {
+      for (const file of e.target.files) {
+        const buffer = await file.arrayBuffer();
+        const url = URL.createObjectURL(file);
+        img2pdfQueue.push({ name: file.name, type: file.type, bytes: new Uint8Array(buffer), url });
+      }
+      renderImg2PdfQueue();
+      e.target.value = '';
+    });
+
+    function renderImg2PdfQueue() {
+      const container = document.getElementById('img2pdfList');
+      if (img2pdfQueue.length === 0) {
+        container.innerHTML = `<p class="col-span-full text-sm text-slate-500 text-center py-14">${t('i2p_empty')}</p>`;
+        return;
+      }
+      container.innerHTML = '';
+      img2pdfQueue.forEach((img, idx) => {
+        const card = document.createElement('div');
+        card.className = 'relative p-2 rounded-2xl bg-[#141936] border border-[#4361ee]/30 flex flex-col items-center';
+        card.innerHTML = `
+          <img src="${img.url}" class="h-28 w-full object-cover rounded-xl mb-1.5">
+          <span class="text-[10px] font-semibold text-blue-200 truncate w-full text-center">${idx + 1}. ${img.name}</span>
+          <button onclick="removeImg2Pdf(${idx})" class="absolute top-1.5 right-1.5 p-1 rounded-full bg-[#090a15]/90 text-[#ef4444] hover:bg-[#ef4444] hover:text-white">
+            <i data-lucide="x" class="w-3 h-3"></i>
+          </button>
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    function removeImg2Pdf(idx) { img2pdfQueue.splice(idx, 1); renderImg2PdfQueue(); }
+    function clearImg2PdfList() { img2pdfQueue = []; renderImg2PdfQueue(); }
+
+    async function executeImg2Pdf() {
+      if (img2pdfQueue.length === 0) return;
+      const fitMode = document.getElementById('imgPageFit').value;
+      const pdfDoc = await PDFLib.PDFDocument.create();
+
+      for (const item of img2pdfQueue) {
+        const embedded = item.type === 'image/png'
+          ? await pdfDoc.embedPng(item.bytes)
+          : await pdfDoc.embedJpg(item.bytes);
+
+        if (fitMode === 'a4' || fitMode === 'letter') {
+          const [pW, pH] = PAGE_SIZES_PT[fitMode];
+          const page = pdfDoc.addPage([pW, pH]);
+          const scale = Math.min((pW - 40) / embedded.width, (pH - 40) / embedded.height);
+          const w = embedded.width * scale;
+          const h = embedded.height * scale;
+          page.drawImage(embedded, { x: (pW - w) / 2, y: (pH - h) / 2, width: w, height: h });
+        } else {
+          const page = pdfDoc.addPage([embedded.width, embedded.height]);
+          page.drawImage(embedded, { x: 0, y: 0, width: embedded.width, height: embedded.height });
+        }
+      }
+
+      const bytes = await pdfDoc.save();
+      originalBaseFileName = img2pdfQueue[0].name.replace(/\.[^/.]+$/, '');
+      document.getElementById('currentFileName').textContent = `${originalBaseFileName}.pdf`;
+      await loadPdfFromBytes(bytes);
+      switchTab('editor');
+      showToast('OK');
+    }
+
+    // ==========================================
+    // NUMERACIÓN DE PÁGINAS
+    // ==========================================
+    async function applyPageNumbers() {
+      if (!currentPdfBytes) return;
+      const format = document.getElementById('pnFormat').value;
+      const pos = document.getElementById('pnPosition').value;
+      const size = parseFloat(document.getElementById('pnSize').value) || 11;
+
+      const pdfDoc = await PDFLib.PDFDocument.load(currentPdfBytes);
+      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+      const pages = pdfDoc.getPages();
+      const total = pages.length;
+
+      pages.forEach((page, i) => {
+        const { width, height } = page.getSize();
+        let label = `${i + 1}`;
+        if (format === 'page_of') label = `Page ${i + 1} of ${total}`;
+        if (format === 'slash') label = `${i + 1} / ${total}`;
+
+        const textWidth = font.widthOfTextAtSize(label, size);
+        let x = (width - textWidth) / 2;
+        let y = 24;
+
+        if (pos === 'bottom-right') x = width - textWidth - 36;
+        if (pos === 'bottom-left') x = 36;
+        if (pos === 'top-right') { x = width - textWidth - 36; y = height - 30; }
+
+        page.drawText(label, { x, y, size, font, color: PDFLib.rgb(0.25, 0.25, 0.28) });
+      });
+
+      await loadPdfFromBytes(await pdfDoc.save());
+      switchTab('editor');
+      showToast('OK');
+    }
+
+    // ==========================================
+    // MARCA DE AGUA
+    // ==========================================
+    function hexToRgbNormalized(hex) {
+      const num = parseInt(hex.replace('#', ''), 16);
+      return { r: ((num >> 16) & 255) / 255, g: ((num >> 8) & 255) / 255, b: (num & 255) / 255 };
+    }
+
+    async function applyWatermark() {
+      if (!currentPdfBytes) return;
+      const text = document.getElementById('wmText').value || 'CONFIDENTIAL';
+      const size = parseFloat(document.getElementById('wmSize').value) || 50;
+      const opacity = parseFloat(document.getElementById('wmOpacity').value) || 0.25;
+      const rgb = hexToRgbNormalized(document.getElementById('wmColor').value || '#ef4444');
+
+      const pdfDoc = await PDFLib.PDFDocument.load(currentPdfBytes);
+      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+
+      pdfDoc.getPages().forEach(page => {
+        const { width, height } = page.getSize();
+        page.drawText(text, {
+          x: width * 0.18,
+          y: height * 0.35,
+          size,
+          font,
+          color: PDFLib.rgb(rgb.r, rgb.g, rgb.b),
+          opacity,
+          rotate: PDFLib.degrees(38)
+        });
+      });
+
+      await loadPdfFromBytes(await pdfDoc.save());
+      switchTab('editor');
+      showToast('OK');
+    }
+
+    // ==========================================
+    // METADATOS
+    // ==========================================
+    async function loadMetadataFields() {
+      if (!currentPdfBytes) return;
+      const pdfDoc = await PDFLib.PDFDocument.load(currentPdfBytes);
+      document.getElementById('metaTitle').value = pdfDoc.getTitle() || '';
+      document.getElementById('metaAuthor').value = pdfDoc.getAuthor() || '';
+      document.getElementById('metaSubject').value = pdfDoc.getSubject() || '';
+    }
+
+    async function saveMetadata() {
+      if (!currentPdfBytes) return;
+      const pdfDoc = await PDFLib.PDFDocument.load(currentPdfBytes);
+      pdfDoc.setTitle(document.getElementById('metaTitle').value);
+      pdfDoc.setAuthor(document.getElementById('metaAuthor').value);
+      pdfDoc.setSubject(document.getElementById('metaSubject').value);
+      await loadPdfFromBytes(await pdfDoc.save());
+      showToast('OK');
+    }
+
+    async function wipeMetadata() {
+      if (!currentPdfBytes) return;
+      const pdfDoc = await PDFLib.PDFDocument.load(currentPdfBytes);
+      pdfDoc.setTitle('');
+      pdfDoc.setAuthor('');
+      pdfDoc.setSubject('');
+      pdfDoc.setKeywords([]);
+      pdfDoc.setProducer('');
+      pdfDoc.setCreator('');
+      await loadPdfFromBytes(await pdfDoc.save());
+      loadMetadataFields();
+      showToast('OK');
+    }
+
+    // ==========================================
+    // PDF A IMÁGENES PNG
+    // ==========================================
+    async function renderImagesGrid() {
+      if (!pdfJsDoc) return;
+      const grid = document.getElementById('imagesGrid');
+      grid.innerHTML = '';
+
+      for (let i = 1; i <= totalPages; i++) {
+        const page = await pdfJsDoc.getPage(i);
+        const viewport = page.getViewport({ scale: 1.5 });
+
+        const card = document.createElement('div');
+        card.className = 'cyber-panel p-3 rounded-2xl flex flex-col items-center justify-between';
+
+        const c = document.createElement('canvas');
+        c.width = viewport.width;
+        c.height = viewport.height;
+        c.className = 'rounded-xl shadow-md mb-3 max-h-52 object-contain';
+        await page.render({ canvasContext: c.getContext('2d'), viewport }).promise;
+
+        const btn = document.createElement('button');
+        btn.className = 'w-full py-2 rounded-xl bg-[#4361ee]/20 hover:bg-gradient-to-r hover:from-[#4361ee] hover:to-[#f72585] text-blue-200 hover:text-white text-xs font-bold border border-[#4361ee]/40 transition flex items-center justify-center gap-1.5';
+        btn.innerHTML = `<i data-lucide="download" class="w-3.5 h-3.5"></i> ${t('download_png')} ${i} (PNG)`;
+        btn.onclick = () => {
+          const link = document.createElement('a');
+          link.download = `${originalBaseFileName}_${i}.png`;
+          link.href = c.toDataURL('image/png');
+          link.click();
+        };
+
+        card.appendChild(c);
+        card.appendChild(btn);
+        grid.appendChild(card);
+      }
+      lucide.createIcons();
+    }
+
+    // ==========================================
+    // EXPORTACIÓN FINAL
+    // ==========================================
+    function openSaveModal() {
+      if (!currentPdfBytes) return;
+      const input = document.getElementById('exportFileNameInput');
+      input.value = `${originalBaseFileName}_PaperKage`;
+      document.getElementById('saveModal').classList.remove('hidden');
+      setTimeout(() => { input.focus(); input.select(); }, 50);
+    }
+
+    function closeSaveModal() {
+      document.getElementById('saveModal').classList.add('hidden');
+    }
+
+    async function confirmAndExportPdf() {
+      let chosenName = document.getElementById('exportFileNameInput').value.trim();
+      if (!chosenName) chosenName = `${originalBaseFileName}_PaperKage`;
+      chosenName = chosenName.replace(/\.pdf$/i, '') + '.pdf';
+      closeSaveModal();
+      await exportCurrentPdf(chosenName);
+    }
+
+    async function exportCurrentPdf(outputFileName) {
+      if (!currentPdfBytes) return;
+
+      const pdfDoc = await PDFLib.PDFDocument.load(currentPdfBytes);
+      const pages = pdfDoc.getPages();
+
+      for (const [pageNumStr, annotations] of Object.entries(pageAnnotations)) {
+        if (!annotations || annotations.length === 0) continue;
+        const pageIdx = parseInt(pageNumStr, 10) - 1;
+        if (pageIdx < 0 || pageIdx >= pages.length) continue;
+
+        const pdfPage = pages[pageIdx];
+        const { width, height } = pdfPage.getSize();
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width * 2;
+        tempCanvas.height = height * 2;
+        const tCtx = tempCanvas.getContext('2d');
+
+        for (const item of annotations) {
+          if (item.type === 'signature' || item.type === 'image') {
+            await new Promise((resolve) => {
+              const img = new Image();
+              img.onload = () => {
+                tCtx.drawImage(img, item.x * tempCanvas.width, item.y * tempCanvas.height, item.w * tempCanvas.width, item.h * tempCanvas.height);
+                resolve();
+              };
+              img.src = item.dataUrl;
+            });
+          } else {
+            drawItemOnContext(tCtx, item, tempCanvas.width, tempCanvas.height, 2, 2);
+          }
+        }
+
+        const pngDataUrl = tempCanvas.toDataURL('image/png');
+        const pngImage = await pdfDoc.embedPng(pngDataUrl);
+        pdfPage.drawImage(pngImage, { x: 0, y: 0, width, height });
+      }
+
+      const finalBytes = await pdfDoc.save();
+      downloadBytes(finalBytes, outputFileName);
+      showToast(outputFileName);
+    }
+
+    function downloadBytes(bytes, fileName) {
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Inicializar idioma al cargar
+    initLanguage();
+  </script>
+</body>
+</html>
